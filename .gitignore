@@ -1,0 +1,39 @@
+# Arquivos de configuração sensíveis
+config/database.php
+
+# Uploads de usuários
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Cache
+cache/
+tmp/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.backup
+
+# Composer (se usado no futuro)
+vendor/
+composer.lock
+
+# Node modules (se usado no futuro)
+node_modules/
+package-lock.json 
