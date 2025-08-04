@@ -57,12 +57,17 @@
             
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="setor" class="form-label">
+                    <label for="setor_id" class="form-label">
                         <i class="bi bi-building"></i> Setor *
                     </label>
-                    <input type="text" class="form-control" id="setor" name="setor" required
-                           value="<?= htmlspecialchars($usuario['setor']) ?>"
-                           placeholder="Ex: Registro, Manutenção, etc.">
+                    <select class="form-select" id="setor_id" name="setor_id" required>
+                        <option value="">Selecione um setor</option>
+                        <?php foreach ($setores as $setor): ?>
+                        <option value="<?= $setor['id'] ?>" <?= $usuario['setor_id'] == $setor['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($setor['nome']) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 
                 <div class="col-md-6 mb-3">

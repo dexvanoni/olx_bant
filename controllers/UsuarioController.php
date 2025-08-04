@@ -18,8 +18,10 @@ class UsuarioController {
         }
         
         $usuarios = $this->db->fetchAll("
-            SELECT * FROM administradores 
-            ORDER BY nome ASC
+            SELECT a.*, s.nome as setor_nome 
+            FROM administradores a
+            LEFT JOIN setores s ON a.setor_id = s.id
+            ORDER BY a.nome ASC
         ");
         
         // Definir a rota atual
@@ -46,11 +48,11 @@ class UsuarioController {
             $senha = $_POST['senha'] ?? '';
             $nome = sanitize($_POST['nome'] ?? '');
             $email = sanitize($_POST['email'] ?? '');
-            $setor = sanitize($_POST['setor'] ?? '');
+            $setor_id = (int)($_POST['setor_id'] ?? 0);
             $nivel = sanitize($_POST['nivel'] ?? 'setor');
             
             // Validar campos
-            if (empty($usuario) || empty($senha) || empty($nome) || empty($email) || empty($setor)) {
+            if (empty($usuario) || empty($senha) || empty($nome) || empty($email) || $setor_id <= 0) {
                 showAlert('Todos os campos são obrigatórios', 'danger');
             } else {
                 // Verificar se usuário já existe
@@ -61,15 +63,18 @@ class UsuarioController {
                     $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
                     
                     $this->db->query("
-                        INSERT INTO administradores (usuario, senha, nome, email, setor, nivel)
+                        INSERT INTO administradores (usuario, senha, nome, email, setor_id, nivel)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    ", [$usuario, $senha_hash, $nome, $email, $setor, $nivel]);
+                    ", [$usuario, $senha_hash, $nome, $email, $setor_id, $nivel]);
                     
                     showAlert('Usuário criado com sucesso!', 'success');
                     redirect('index.php?route=admin/usuarios');
                 }
             }
         }
+        
+        // Buscar setores para o select
+        $setores = $this->db->fetchAll("SELECT * FROM setores WHERE ativo = 1 ORDER BY nome ASC");
         
         // Definir a rota atual
         $route = 'admin/usuarios';
@@ -97,29 +102,34 @@ class UsuarioController {
             redirect('index.php?route=admin/usuarios');
         }
         
+        // Buscar setores para o select
+        $setores = $this->db->fetchAll("SELECT * FROM setores WHERE ativo = 1 ORDER BY nome ASC");
+        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nome = sanitize($_POST['nome'] ?? '');
             $email = sanitize($_POST['email'] ?? '');
-            $setor = sanitize($_POST['setor'] ?? '');
+            $senha = $_POST['senha'] ?? '';
+            $setor_id = (int)($_POST['setor_id'] ?? 0);
             $nivel = sanitize($_POST['nivel'] ?? 'setor');
             $ativo = isset($_POST['ativo']) ? 1 : 0;
-            $senha = $_POST['senha'] ?? '';
             
             // Validar campos
-            if (empty($nome) || empty($email) || empty($setor)) {
-                showAlert('Campos obrigatórios não podem estar vazios', 'danger');
+            if (empty($nome) || empty($email) || $setor_id <= 0) {
+                showAlert('Nome, email e setor são obrigatórios', 'danger');
             } else {
-                // Atualizar dados básicos
-                $this->db->query("
-                    UPDATE administradores 
-                    SET nome = ?, email = ?, setor = ?, nivel = ?, ativo = ?
-                    WHERE id = ?
-                ", [$nome, $email, $setor, $nivel, $ativo, $id]);
-                
-                // Atualizar senha se fornecida
                 if (!empty($senha)) {
                     $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-                    $this->db->query("UPDATE administradores SET senha = ? WHERE id = ?", [$senha_hash, $id]);
+                    $this->db->query("
+                        UPDATE administradores 
+                        SET nome = ?, email = ?, senha = ?, setor_id = ?, nivel = ?, ativo = ?
+                        WHERE id = ?
+                    ", [$nome, $email, $senha_hash, $setor_id, $nivel, $ativo, $id]);
+                } else {
+                    $this->db->query("
+                        UPDATE administradores 
+                        SET nome = ?, email = ?, setor_id = ?, nivel = ?, ativo = ?
+                        WHERE id = ?
+                    ", [$nome, $email, $setor_id, $nivel, $ativo, $id]);
                 }
                 
                 showAlert('Usuário atualizado com sucesso!', 'success');

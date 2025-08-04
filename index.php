@@ -12,6 +12,7 @@ require_once 'controllers/AdminController.php';
 require_once 'controllers/MaterialController.php';
 require_once 'controllers/ResgateController.php';
 require_once 'controllers/UsuarioController.php';
+require_once 'controllers/SetorController.php';
 
 // Roteamento
 switch ($route) {
@@ -78,6 +79,26 @@ switch ($route) {
     case 'admin/usuarios/excluir':
         $controller = new UsuarioController();
         $controller->excluir();
+        break;
+    case 'admin/setores':
+        $controller = new SetorController();
+        $controller->index();
+        break;
+    case 'admin/setores/criar':
+        $controller = new SetorController();
+        $controller->criar();
+        break;
+    case 'admin/setores/editar':
+        $controller = new SetorController();
+        $controller->editar();
+        break;
+    case 'admin/setores/excluir':
+        $controller = new SetorController();
+        $controller->excluir();
+        break;
+    case 'admin/setores/get':
+        $controller = new SetorController();
+        $controller->getSetores();
         break;
     case 'resgatar':
         $controller = new ResgateController();

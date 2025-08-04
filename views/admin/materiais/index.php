@@ -85,7 +85,7 @@
                         </td>
                         <td>
                             <small class="text-muted">
-                                <?= htmlspecialchars($material['admin_nome'] ?? 'N/A') ?>
+                                <?= htmlspecialchars($material['setor_nome'] ?? 'N/A') ?>
                             </small>
                         </td>
                         <td>

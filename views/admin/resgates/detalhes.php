@@ -28,7 +28,7 @@
                 <p><strong>Dono da Carga:</strong> <?= htmlspecialchars($resgate['dono_carga'] ?? '') ?></p>
                 <p><strong>Tipo:</strong> <?= htmlspecialchars($resgate['tipo_material'] ?? '') ?></p>
                 <p><strong>Condição:</strong> <?= ucfirst($resgate['condicao_item'] ?? '') ?></p>
-                <p><strong>Responsável:</strong> <?= htmlspecialchars($resgate['admin_nome'] ?? '') ?> (<?= htmlspecialchars($resgate['admin_setor'] ?? '') ?>)</p>
+                <p><strong>Responsável:</strong> <?= htmlspecialchars($resgate['admin_nome'] ?? '') ?> (<?= htmlspecialchars($resgate['setor_nome'] ?? '') ?>)</p>
             </div>
         </div>
     </div>

@@ -17,32 +17,36 @@ class MaterialController {
         // Se for admin geral, mostra todos os materiais
         if ($admin['nivel'] === 'admin') {
             $materiais = $this->db->fetchAll("
-                SELECT m.*, 
+                SELECT m.*,
                        COUNT(r.id) as total_resgates,
                        SUM(CASE WHEN r.status = 'aguardando_retirada' THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
-                       a.nome as admin_nome
-                FROM materiais m 
+                       a.nome as admin_nome,
+                       s.nome as setor_nome
+                FROM materiais m
                 LEFT JOIN resgates r ON m.id = r.material_id
                 LEFT JOIN administradores a ON m.administrador_id = a.id
-                GROUP BY m.id 
+                LEFT JOIN setores s ON m.setor_id = s.id
+                GROUP BY m.id
                 ORDER BY m.created_at DESC
             ");
         } else {
             // Se for admin de setor, mostra apenas materiais do seu setor
             $materiais = $this->db->fetchAll("
-                SELECT m.*, 
+                SELECT m.*,
                        COUNT(r.id) as total_resgates,
                        SUM(CASE WHEN r.status = 'aguardando_retirada' THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
-                       a.nome as admin_nome
-                FROM materiais m 
+                       a.nome as admin_nome,
+                       s.nome as setor_nome
+                FROM materiais m
                 LEFT JOIN resgates r ON m.id = r.material_id
                 LEFT JOIN administradores a ON m.administrador_id = a.id
-                WHERE m.setor = ?
-                GROUP BY m.id 
+                LEFT JOIN setores s ON m.setor_id = s.id
+                WHERE m.setor_id = ?
+                GROUP BY m.id
                 ORDER BY m.created_at DESC
-            ", [$admin['setor']]);
+            ", [$admin['setor_id']]);
         }
         
         // Definir a rota atual
@@ -57,6 +61,9 @@ class MaterialController {
         if (!isset($_SESSION['admin_id'])) {
             redirect('index.php?route=admin/login');
         }
+        
+        // Buscar setores para o select
+        $setores = $this->db->fetchAll("SELECT * FROM setores WHERE ativo = 1 ORDER BY nome ASC");
         
         // Definir a rota atual
         $route = 'admin/materiais';
@@ -79,7 +86,14 @@ class MaterialController {
             $condicao_item = sanitize($_POST['condicao_item']);
             $tipo_material = sanitize($_POST['tipo_material']);
             $quantidade_total = (int)($_POST['quantidade_total'] ?? 1);
-            $quantidade_disponivel = $quantidade_total; // Inicialmente igual ao total
+            $quantidade_disponivel = $quantidade_total;
+            $setor_id = (int)($_POST['setor_id'] ?? 0);
+            
+            // Validar campos obrigatórios
+            if (empty($descricao) || empty($local_retirada) || empty($numero_bmp) || empty($dono_carga) || empty($tipo_material) || $setor_id <= 0) {
+                showAlert('Todos os campos obrigatórios devem ser preenchidos', 'danger');
+                redirect('index.php?route=admin/materiais/criar');
+            }
             
             // Processar upload de fotos
             $fotos = [];
@@ -109,9 +123,9 @@ class MaterialController {
             }
             
             $this->db->query("
-                INSERT INTO materiais (descricao, local_retirada, numero_bmp, dono_carga, condicao_item, tipo_material, quantidade_total, quantidade_disponivel, fotos, administrador_id, setor)
+                INSERT INTO materiais (descricao, local_retirada, numero_bmp, dono_carga, condicao_item, tipo_material, quantidade_total, quantidade_disponivel, fotos, administrador_id, setor_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ", [$descricao, $local_retirada, $numero_bmp, $dono_carga, $condicao_item, $tipo_material, $quantidade_total, $quantidade_disponivel, json_encode($fotos), $_SESSION['admin_id'], $_SESSION['admin_setor']]);
+            ", [$descricao, $local_retirada, $numero_bmp, $dono_carga, $condicao_item, $tipo_material, $quantidade_total, $quantidade_disponivel, json_encode($fotos), $_SESSION['admin_id'], $setor_id]);
             
             redirect('index.php?route=admin/materiais');
         }

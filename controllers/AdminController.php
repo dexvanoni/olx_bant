@@ -39,7 +39,12 @@ class AdminController {
                     $_SESSION['admin_id'] = $admin['id'];
                     $_SESSION['admin_nome'] = $admin['nome'];
                     $_SESSION['admin_nivel'] = $admin['nivel'];
-                    $_SESSION['admin_setor'] = $admin['setor'];
+                    $_SESSION['admin_setor_id'] = $admin['setor_id'];
+                    
+                    // Buscar nome do setor
+                    $setor = $this->db->fetch("SELECT nome FROM setores WHERE id = ?", [$admin['setor_id']]);
+                    $_SESSION['admin_setor'] = $setor['nome'] ?? 'N/A';
+                    
                     redirect('index.php?route=admin');
                 } else {
                     showAlert('Usuário ou senha incorretos', 'danger');

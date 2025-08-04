@@ -115,6 +115,12 @@ if (!isset($route)) {
                               Usuários
                           </a>
                       </li>
+                      <li>
+                          <a href="index.php?route=admin/setores" class="nav-link <?= strpos($route, 'setores') !== false ? 'active' : '' ?>">
+                              <i class="bi bi-building me-2"></i>
+                              Setores
+                          </a>
+                      </li>
                       <?php endif; ?>
         </ul>
         <hr>

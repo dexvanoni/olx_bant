@@ -45,20 +45,23 @@
         <?php else: ?>
         <div class="row g-4">
             <?php foreach ($materiais as $material): ?>
+            <?php 
+                $fotos = json_decode($material['fotos'], true) ?: [];
+                $foto_principal = !empty($fotos) ? $fotos[0] : null;
+                $fotos_json = htmlspecialchars(json_encode(array_map(function($f) { return UPLOAD_PATH . ltrim($f, '/'); }, $fotos)));
+            ?>
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card material-card h-100">
                     <div class="position-relative">
-                        <?php 
-                        $fotos = json_decode($material['fotos'], true) ?: [];
-                        $foto_principal = !empty($fotos) ? $fotos[0] : null;
-                        ?>
                         <?php if ($foto_principal): ?>
                             <img src="<?= UPLOAD_PATH . $foto_principal ?>" 
                                  class="card-img-top material-image" 
                                  alt="Foto do material"
+                                 data-fotos='<?= $fotos_json ?>'
+                                 style="cursor:zoom-in;"
                                  onerror="this.src='assets/img/placeholder.jpg'">
                         <?php else: ?>
-                            <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
+                            <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center" style="cursor:zoom-in;" data-fotos='<?= $fotos_json ?>'>
                                 <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
                             </div>
                         <?php endif; ?>
@@ -237,6 +240,34 @@
     </div>
 </div>
 
+<!-- Modal de Galeria de Fotos -->
+ <!--
+<div class="modal fade" id="galeriaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-images"></i> Fotos do Material
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center position-relative">
+                <button id="galeriaPrev" class="btn btn-light position-absolute top-50 start-0 translate-middle-y" style="z-index:2;" tabindex="-1">
+                    <i class="bi bi-chevron-left fs-2"></i>
+                </button>
+                <img id="galeriaImagem" src="" class="img-fluid rounded shadow" style="max-height:70vh; max-width:100%; object-fit:contain; background:#222;" alt="Foto do material">
+                <button id="galeriaNext" class="btn btn-light position-absolute top-50 end-0 translate-middle-y" style="z-index:2;" tabindex="-1">
+                    <i class="bi bi-chevron-right fs-2"></i>
+                </button>
+            </div>
+            <div class="modal-footer justify-content-center bg-dark border-0">
+                <span id="galeriaContador" class="text-white-50 small"></span>
+            </div>
+        </div>
+    </div>
+</div>
+-->
+
 <script>
 // Configurar modal de resgate
 document.addEventListener('DOMContentLoaded', function() {
@@ -254,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     resgateModal.addEventListener('show.bs.modal', function (event) {
         const button = event.relatedTarget;
+        if (!button) return;
         const materialId = button.getAttribute('data-material-id');
         const materialDesc = button.getAttribute('data-material-desc');
         const quantidadeDisponivel = button.getAttribute('data-quantidade-disponivel');
@@ -352,4 +384,74 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.send(formData);
     });
 });
+
+// Galeria de fotos dos materiais
+/*
+(function() {
+    // Armazenar fotos e índice atual
+    let fotos = [];
+    let fotoAtual = 0;
+
+    // Elementos do modal
+    const galeriaModal = document.getElementById('galeriaModal');
+    const galeriaImagem = document.getElementById('galeriaImagem');
+    const galeriaPrev = document.getElementById('galeriaPrev');
+    const galeriaNext = document.getElementById('galeriaNext');
+    const galeriaContador = document.getElementById('galeriaContador');
+
+    // Adicionar onerror para placeholder
+    galeriaImagem.onerror = function() {
+        this.src = 'assets/img/placeholder.jpg';
+    };
+
+    // Função para atualizar imagem
+    function atualizarImagem() {
+        if (!fotos.length) return;
+        galeriaImagem.src = fotos[fotoAtual];
+        galeriaContador.textContent = (fotoAtual+1) + ' / ' + fotos.length;
+        galeriaPrev.style.display = fotos.length > 1 ? '' : 'none';
+        galeriaNext.style.display = fotos.length > 1 ? '' : 'none';
+    }
+
+    // Eventos de navegação
+    galeriaPrev.addEventListener('click', function() {
+        if (fotos.length) {
+            fotoAtual = (fotoAtual - 1 + fotos.length) % fotos.length;
+            atualizarImagem();
+        }
+    });
+    galeriaNext.addEventListener('click', function() {
+        if (fotos.length) {
+            fotoAtual = (fotoAtual + 1) % fotos.length;
+            atualizarImagem();
+        }
+    });
+
+    // Fechar modal reseta galeria
+    galeriaModal.addEventListener('hidden.bs.modal', function() {
+        fotos = [];
+        fotoAtual = 0;
+        galeriaImagem.src = '';
+        galeriaContador.textContent = '';
+    });
+
+    // Delegação: clique na imagem do card
+    document.addEventListener('click', function(e) {
+        const img = e.target.closest('.material-image[data-fotos]');
+        if (img) {
+            try {
+                fotos = JSON.parse(img.getAttribute('data-fotos'));
+            } catch {
+                fotos = [];
+            }
+            console.log('Fotos para galeria:', fotos); // <-- debug
+            if (!Array.isArray(fotos) || !fotos.length) return;
+            fotoAtual = 0;
+            atualizarImagem();
+            const modal = new bootstrap.Modal(galeriaModal);
+            modal.show();
+        }
+    });
+})();
+*/
 </script> 

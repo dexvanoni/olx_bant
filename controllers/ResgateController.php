@@ -28,9 +28,9 @@ class ResgateController {
                 SELECT r.*, m.descricao as material_descricao, m.local_retirada
                 FROM resgates r
                 JOIN materiais m ON r.material_id = m.id
-                WHERE m.setor = ?
+                WHERE m.setor_id = ?
                 ORDER BY r.data_resgate DESC
-            ", [$admin['setor']]);
+            ", [$admin['setor_id']]);
         }
         
         // Definir a rota atual
@@ -166,13 +166,13 @@ class ResgateController {
         $id = $_GET['id'] ?? 0;
         
         // Query base
-        $query = "SELECT r.*, m.descricao as material_descricao, m.local_retirada, m.numero_bmp, m.dono_carga, m.tipo_material, m.condicao_item, m.fotos, a.nome as admin_nome, a.setor as admin_setor FROM resgates r JOIN materiais m ON r.material_id = m.id LEFT JOIN administradores a ON m.administrador_id = a.id WHERE r.id = ?";
+        $query = "SELECT r.*, m.descricao as material_descricao, m.local_retirada, m.numero_bmp, m.dono_carga, m.tipo_material, m.condicao_item, m.fotos, a.nome as admin_nome, s.nome as setor_nome FROM resgates r JOIN materiais m ON r.material_id = m.id LEFT JOIN administradores a ON m.administrador_id = a.id LEFT JOIN setores s ON m.setor_id = s.id WHERE r.id = ?";
         $params = [$id];
         
         // Se for admin de setor, adicionar filtro por setor
         if ($admin['nivel'] !== 'admin') {
-            $query .= " AND m.setor = ?";
-            $params[] = $admin['setor'];
+            $query .= " AND m.setor_id = ?";
+            $params[] = $admin['setor_id'];
         }
         
         $resgate = $this->db->fetch($query, $params);
@@ -201,8 +201,8 @@ class ResgateController {
         
         // Se for admin de setor, adicionar filtro por setor
         if ($admin['nivel'] !== 'admin') {
-            $query .= " AND m.setor = ?";
-            $params[] = $admin['setor'];
+            $query .= " AND m.setor_id = ?";
+            $params[] = $admin['setor_id'];
         }
         
         $resgate = $this->db->fetch($query, $params);
@@ -231,8 +231,8 @@ class ResgateController {
         
         // Se for admin de setor, adicionar filtro por setor
         if ($admin['nivel'] !== 'admin') {
-            $query .= " AND m.setor = ?";
-            $params[] = $admin['setor'];
+            $query .= " AND m.setor_id = ?";
+            $params[] = $admin['setor_id'];
         }
         
         $resgate = $this->db->fetch($query, $params);
