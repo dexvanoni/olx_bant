@@ -19,7 +19,7 @@ class MaterialController {
             $materiais = $this->db->fetchAll("
                 SELECT m.*,
                        COUNT(r.id) as total_resgates,
-                       SUM(CASE WHEN r.status = 'aguardando_retirada' THEN 1 ELSE 0 END) as resgates_pendentes,
+                       SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
                        a.nome as admin_nome,
                        s.nome as setor_nome
@@ -35,7 +35,7 @@ class MaterialController {
             $materiais = $this->db->fetchAll("
                 SELECT m.*,
                        COUNT(r.id) as total_resgates,
-                       SUM(CASE WHEN r.status = 'aguardando_retirada' THEN 1 ELSE 0 END) as resgates_pendentes,
+                       SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
                        a.nome as admin_nome,
                        s.nome as setor_nome
@@ -215,7 +215,7 @@ class MaterialController {
             exit;
         }
         $resgates = $this->db->fetchAll(
-            "SELECT r.id, r.nome_guerra as nome_usuario, r.data_resgate as data_solicitacao, r.status
+            "SELECT r.id, r.nome_guerra as nome_usuario, r.data_resgate as data_solicitacao, r.status, r.justificativa, r.posto_graduacao, r.esquadrao, r.setor, r.contato
              FROM resgates r
              WHERE r.material_id = ?
              ORDER BY r.data_resgate ASC",
@@ -240,9 +240,15 @@ class MaterialController {
             exit;
         }
         // Marcar o resgate selecionado como retirado
-        $this->db->execute("UPDATE resgates SET status = 'resgatado' WHERE id = ?", [$resgate_id]);
+        $this->db->query("UPDATE resgates SET status = 'retirado' WHERE id = ?", [$resgate_id]);
         // Cancelar os outros resgates do mesmo material que ainda não foram retirados
-        $this->db->execute("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status = 'aguardando_retirada'", [$material_id, $resgate_id]);
+        $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
+        
+        // Se o material estava em disputa, resolver a disputa
+        $material = $this->db->fetch("SELECT status FROM materiais WHERE id = ?", [$material_id]);
+        if ($material && $material['status'] === 'em_disputa') {
+            $this->db->query("UPDATE materiais SET status = 'resgatado' WHERE id = ?", [$material_id]);
+        }
         echo json_encode(['success' => true]);
         exit;
     }

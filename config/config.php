@@ -54,4 +54,55 @@ function determinarStatusMaterial($quantidade_disponivel, $quantidade_total) {
     } else {
         return 'aguardando_retirada';
     }
+}
+
+// Função para verificar se material deve entrar em disputa
+function verificarDisputa($material_id, $db) {
+    // Buscar informações do material e seus resgates
+    $material = $db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+    if (!$material) return false;
+    
+    // Contar resgates pendentes
+    $resgates_pendentes = $db->fetch("
+        SELECT COUNT(*) as total 
+        FROM resgates 
+        WHERE material_id = ? AND status = 'aguardando_retirada'
+    ", [$material_id]);
+    
+    // Se há mais resgates pendentes que quantidade total, entrar em disputa
+    if ($resgates_pendentes['total'] > $material['quantidade_total']) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Função para processar disputas expiradas
+function processarDisputasExpiradas($db) {
+    $prazo_disputa = 24; // 24 horas
+    
+    // Buscar materiais em disputa há mais de 24 horas
+    $materiais_disputa = $db->fetchAll("
+        SELECT DISTINCT m.id, m.descricao
+        FROM materiais m
+        JOIN resgates r ON m.id = r.material_id
+        WHERE m.status = 'em_disputa'
+        AND r.data_disputa < DATE_SUB(NOW(), INTERVAL ? HOUR)
+    ", [$prazo_disputa]);
+    
+    foreach ($materiais_disputa as $material) {
+        // Cancelar todos os resgates pendentes do material
+        $db->query("
+            UPDATE resgates 
+            SET status = 'cancelado' 
+            WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa')
+        ", [$material['id']]);
+        
+        // Manter material como resgatado (não volta para disponível)
+        $db->query("
+            UPDATE materiais 
+            SET status = 'resgatado' 
+            WHERE id = ?
+        ", [$material['id']]);
+    }
 } 

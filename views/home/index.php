@@ -72,11 +72,15 @@
                             <span class="badge bg-warning status-badge">
                                 <i class="bi bi-hourglass-split"></i> Estoque em disputa
                             </span>
-                        <?php else: ?>
-                            <span class="badge bg-success status-badge">
-                                <i class="bi bi-check-circle"></i> Disponível
-                            </span>
-                        <?php endif; ?>
+                            <?php elseif ($material['status'] == 'em_disputa'): ?>
+                                <span class="badge bg-success status-badge">
+                                    <i class="bi bi-check-circle"></i> Entrar em disputa
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-success status-badge">
+                                    <i class="bi bi-check-circle"></i> Disponível
+                                </span>
+                            <?php endif; ?>
                     </div>
                     
                     <div class="card-body d-flex flex-column">
@@ -99,9 +103,9 @@
                             <small class="text-muted">
                                 <i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?>
                             </small><br>
-                            <?php if ($material['quantidade_disponivel'] <= 0): ?>
+                            <?php if ($material['status'] == 'em_disputa'): ?>
                                 <small class="text-muted">
-                                <i class="bi bi-box"></i> <strong>Material em disputa</strong>
+                                <i class="bi bi-box"></i> <strong>Material zerado! Entrar em disputa</strong>
                                 </small>
                             <?php endif; ?>
                             <?php if ($material['status'] == 'disponivel' || $material['status'] == 'aguardando_retirada'): ?>
@@ -130,7 +134,7 @@
                                     data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
                                     >
                                     <?php if ($material['status'] == 'resgatado'): ?>
-                                        <i class="bi bi-hourglass-split" ></i> EM PROCESSO DE DOAÇÃO
+                                        <i class="bi bi-hourglass-split" ></i> EM ANÁLISE DE DISPUTA
                                     <?php else: ?>
                                         <i class="bi bi-hand-index"></i> RESGATAR
                                     <?php endif; ?>
@@ -242,6 +246,20 @@
                                 <i class="bi bi-building"></i> Setor *
                             </label>
                             <input type="text" class="form-control" id="setor" name="setor" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="justificativa" class="form-label">
+                                <i class="bi bi-chat-text"></i> Justificativa do Resgate *
+                            </label>
+                            <textarea class="form-control" id="justificativa" name="justificativa"
+                                      rows="4" required
+                                      placeholder="Informe onde o material será empregado e quais suas utilidades..."></textarea>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Descreva detalhadamente o uso pretendido do material e sua importância para a missão.
+                            </div>
                         </div>
                     </div>
                     

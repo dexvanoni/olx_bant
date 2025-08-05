@@ -22,10 +22,10 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="descricao" class="form-label">
-                                <i class="bi bi-card-text"></i> Descrição do Material *
+                                <i class="bi bi-card-text"></i> Material *
                             </label>
-                            <textarea class="form-control" id="descricao" name="descricao" rows="3" required 
-                                      placeholder="Descreva detalhadamente o material..."></textarea>
+                            <input type="text" class="form-control" id="descricao" name="descricao" required 
+                                      placeholder="Ex: Mesa de escritório, Cadeira, Notebook, etc.">
                         </div>
                     </div>
                     
@@ -105,10 +105,7 @@
                             <i class="bi bi-info-circle"></i> Setor responsável pelo material
                         </div>
                     </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-12 mb-3">
+                    <div class="col-6 mb-3">
                             <label for="fotos" class="form-label">
                                 <i class="bi bi-camera"></i> Fotos do Material (máximo 3)
                             </label>
@@ -119,6 +116,10 @@
                                 Você pode selecionar até 3 fotos. Use "capture" para ativar a câmera em dispositivos móveis.
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
+                        
                     </div>
                     
                     <div class="row">

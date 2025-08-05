@@ -56,6 +56,19 @@
                 <p><strong>Setor:</strong> <?= htmlspecialchars($resgate['setor'] ?? '') ?></p>
             </div>
         </div>
+        
+        <?php if (!empty($resgate['justificativa'])): ?>
+        <div class="row mt-3">
+            <div class="col-12">
+                <p><strong>Justificativa do Resgate:</strong></p>
+                <div class="alert alert-info">
+                    <i class="bi bi-chat-text"></i>
+                    <?= nl2br(htmlspecialchars($resgate['justificativa'])) ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        </div>
     </div>
 </div>
 

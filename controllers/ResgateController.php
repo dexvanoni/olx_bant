@@ -75,16 +75,18 @@ class ResgateController {
             $email = sanitize($_POST['email'] ?? '');
             $esquadrao = sanitize($_POST['esquadrao'] ?? '');
             $setor = sanitize($_POST['setor'] ?? '');
+            $justificativa = sanitize($_POST['justificativa'] ?? '');
             
             // Validar campos obrigatórios
             if (empty($material_id) || empty($posto_graduacao) || empty($nome_guerra) || 
-                empty($contato) || empty($email) || empty($esquadrao) || empty($setor) || $quantidade_resgatada <= 0) {
+                empty($contato) || empty($email) || empty($esquadrao) || empty($setor) || 
+                empty($justificativa) || $quantidade_resgatada <= 0) {
                 echo json_encode(['success' => false, 'message' => 'Todos os campos são obrigatórios e a quantidade deve ser maior que zero']);
                 return;
             }
             
-            // Buscar o material, permitindo tanto disponível quanto resgatado (para disputas)
-            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND (status = 'disponivel' OR status = 'resgatado')", [$material_id]);
+            // Buscar o material, permitindo disponível, resgatado, mas não em disputa
+            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado')", [$material_id]);
             if (!$material) {
                 echo json_encode(['success' => false, 'message' => 'Material não está disponível']);
                 return;
@@ -95,13 +97,25 @@ class ResgateController {
             
             // Inserir resgate normalmente
             $this->db->query("
-                INSERT INTO resgates (material_id, quantidade_resgatada, posto_graduacao, nome_guerra, contato, email, esquadrao, setor, data_limite)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ", [$material_id, $quantidade_resgatada, $posto_graduacao, $nome_guerra, $contato, $email, $esquadrao, $setor, $data_limite]);
+                INSERT INTO resgates (material_id, quantidade_resgatada, posto_graduacao, nome_guerra, contato, email, esquadrao, setor, justificativa, data_limite)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ", [$material_id, $quantidade_resgatada, $posto_graduacao, $nome_guerra, $contato, $email, $esquadrao, $setor, $justificativa, $data_limite]);
             
             // Atualizar quantidade disponível do material
             $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_resgatada;
             $novo_status = determinarStatusMaterial($nova_quantidade, $material['quantidade_total']);
+            
+            // Verificar se deve entrar em disputa
+            if (verificarDisputa($material_id, $this->db)) {
+                $novo_status = 'em_disputa';
+                // Marcar data da disputa nos resgates pendentes
+                $this->db->query("
+                    UPDATE resgates 
+                    SET status = 'em_disputa', data_disputa = NOW() 
+                    WHERE material_id = ? AND status = 'aguardando_retirada'
+                ", [$material_id]);
+            }
+            
             $this->db->query("UPDATE materiais SET quantidade_disponivel = ?, status = ? WHERE id = ?", 
                 [$nova_quantidade, $novo_status, $material_id]);
             

@@ -188,14 +188,15 @@ function abrirModalResgates(materialId, descricao) {
             document.getElementById('resgatesLoading').style.display = 'none';
             if (data.success && Array.isArray(data.resgates)) {
                 let html = '<table class="table table-bordered table-sm">';
-                html += '<thead><tr><th>Solicitante</th><th>Data/Hora</th><th>Status</th><th>Ação</th></tr></thead><tbody>';
+                html += '<thead><tr><th>Solicitante</th><th>Data/Hora</th><th>Status</th><th>Justificativa</th><th>Ação</th></tr></thead><tbody>';
                 data.resgates.forEach(resgate => {
                     html += '<tr>' +
-                        '<td>' + resgate.nome_usuario + '</td>' +
+                        '<td>' + resgate.posto_graduacao + ' ' + resgate.nome_usuario + ' - ' + resgate.esquadrao + '/' + resgate.setor + '/' + resgate.contato + '</td>' +
                         '<td>' + resgate.data_solicitacao + '</td>' +
                         '<td>' + resgate.status + '</td>' +
+                        '<td>' + (resgate.justificativa || '-') + '</td>' +
                         '<td>';
-                    if (resgate.status === 'aguardando_retirada') {
+                    if (resgate.status === 'aguardando_retirada' || resgate.status === 'em_disputa') {
                         html += '<button class="btn btn-success btn-sm" onclick="marcarRetirado(' + resgate.id + ',' + materialId + ')">Marcar Retirado</button>';
                     }
                     html += '</td></tr>';

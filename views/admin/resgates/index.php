@@ -20,6 +20,7 @@
                         <th>Contato</th>
                         <th>Esquadrão</th>
                         <th>Setor</th>
+                        <th>Justificativa</th>
                         <th>Data Resgate</th>
                         <th>Data Limite</th>
                         <th>Status</th>
@@ -47,6 +48,17 @@
                         </td>
                         <td><?= htmlspecialchars($resgate['esquadrao']) ?></td>
                         <td><?= htmlspecialchars($resgate['setor']) ?></td>
+                        <td>
+                            <?php if (!empty($resgate['justificativa'])): ?>
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        onclick="verJustificativa('<?= htmlspecialchars(addslashes($resgate['justificativa'])) ?>')" 
+                                        title="Ver Justificativa">
+                                    <i class="bi bi-chat-text"></i> Ver
+                                </button>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?= date('d/m/Y H:i', strtotime($resgate['data_resgate'])) ?>
                         </td>
@@ -125,6 +137,28 @@
     </div>
 </div>
 
+<!-- Modal de Justificativa -->
+<div class="modal fade" id="justificativaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-chat-text"></i> Justificativa do Resgate
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="justificativaContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function marcarRetirado(id) {
     if (confirm('Confirmar retirada do material?')) {
@@ -135,5 +169,11 @@ function cancelarResgate(id) {
     if (confirm('Deseja cancelar este resgate? A quantidade será devolvida ao estoque.')) {
         window.location.href = 'index.php?route=admin/resgates/cancelar&id=' + id;
     }
+}
+
+function verJustificativa(justificativa) {
+    document.getElementById('justificativaContent').innerHTML = '<div class="alert alert-info"><i class="bi bi-chat-text"></i> ' + justificativa.replace(/\n/g, '<br>') + '</div>';
+    var modal = new bootstrap.Modal(document.getElementById('justificativaModal'));
+    modal.show();
 }
 </script> 

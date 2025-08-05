@@ -104,8 +104,6 @@
                                 <input type="text" class="form-control" id="nome_guerra" name="nome_guerra" required
                                        placeholder="Seu nome de guerra">
                             </div>
-                        
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="contato" class="form-label">
                                     <i class="bi bi-telephone"></i> Contato *
@@ -113,6 +111,9 @@
                                 <input type="tel" class="form-control" id="contato" name="contato" required
                                        placeholder="Telefone ou celular">
                             </div>
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">
                                     <i class="bi bi-envelope"></i> Email *
@@ -120,9 +121,6 @@
                                 <input type="email" class="form-control" id="email" name="email" required
                                        placeholder="seu.email@bant.com">
                             </div>
-                        </div>
-                        
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="esquadrao" class="form-label">
                                     <i class="bi bi-people"></i> Esquadrão *
@@ -130,6 +128,9 @@
                                 <input type="text" class="form-control" id="esquadrao" name="esquadrao" required
                                        placeholder="Seu esquadrão">
                             </div>
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="setor" class="form-label">
                                     <i class="bi bi-building"></i> Setor *
