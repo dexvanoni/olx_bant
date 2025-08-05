@@ -48,6 +48,14 @@ switch ($route) {
         $controller = new MaterialController();
         $controller->excluir();
         break;
+    case 'admin/materiais/getResgatesAjax':
+        $controller = new MaterialController();
+        $controller->getResgatesAjax();
+        break;
+    case 'admin/materiais/marcarRetiradoAjax':
+        $controller = new MaterialController();
+        $controller->marcarRetiradoAjax();
+        break;
     case 'admin/resgates':
         $controller = new ResgateController();
         $controller->index();

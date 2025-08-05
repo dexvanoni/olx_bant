@@ -35,7 +35,7 @@
                 </thead>
                 <tbody>
                     <?php foreach ($materiais as $material): ?>
-                    <tr>
+                    <tr<?php if ($material['total_resgates'] > $material['quantidade_total']): ?> class="table-danger"<?php endif; ?>>
                         <td><?= $material['id'] ?></td>
                         <td>
                             <?php 
@@ -78,9 +78,13 @@
                         </td>
                         <td><?= htmlspecialchars($material['tipo_material']) ?></td>
                         <td>
-                            <strong><?= $material['quantidade_disponivel'] ?></strong> / <?= $material['quantidade_total'] ?>
+                            <?php if ($material['quantidade_disponivel'] <= 0): ?>  
+                                <strong>0</strong> / <?= $material['quantidade_total'] ?>
+                            <?php else: ?>
+                                <strong><?= $material['quantidade_disponivel'] ?></strong> / <?= $material['quantidade_total'] ?>
+                            <?php endif; ?>
                             <?php if ($material['quantidade_disponivel'] < $material['quantidade_total']): ?>
-                                <br><small class="text-warning"><?= $material['quantidade_total'] - $material['quantidade_disponivel'] ?> resgatados</small>
+                                <br><small class="text-warning"><?= $material['quantidade_total'] - $material['quantidade_disponivel'] ?> resgates</small>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -97,7 +101,14 @@
                             ];
                             $cor = $status_cores[$material['status']] ?? 'secondary';
                             ?>
-                            <span class="badge bg-<?= $cor ?>"><?= ucfirst(str_replace('_', ' ', $material['status'])) ?></span>
+                            
+                            <?php if ($material['quantidade_disponivel'] <= 0): ?>
+                                <small class="text-muted">
+                                <i class="bi bi-box"></i> <strong>Material em disputa</strong>
+                                </small>
+                            <?php else: ?>
+                                <span class="badge bg-<?= $cor ?>"><?= ucfirst(str_replace('_', ' ', $material['status'])) ?></span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($material['total_resgates'] > 0): ?>
@@ -122,6 +133,14 @@
                                         onclick="confirmDelete(<?= $material['id'] ?>, '<?= htmlspecialchars($material['descricao']) ?>')">
                                     <i class="bi bi-trash"></i>
                                 </button>
+                                <?php if ($material['total_resgates'] > $material['quantidade_total']): ?>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-warning" 
+                                            title="Ver Resgates"
+                                            onclick="abrirModalResgates(<?= $material['id'] ?>, '<?= htmlspecialchars(addslashes($material['descricao'])) ?>')">
+                                        <i class="bi bi-list-ul"></i>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
@@ -131,3 +150,89 @@
         </div>
     </div>
 </div> 
+
+<!-- Modal de Resgates -->
+<div class="modal fade" id="modalResgates" tabindex="-1" aria-labelledby="modalResgatesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalResgatesLabel">Resgates do Material</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="resgatesLoading" class="text-center my-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+        </div>
+        <div id="resgatesConteudo" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirModalResgates(materialId, descricao) {
+    document.getElementById('modalResgatesLabel').textContent = 'Resgates do Material: ' + descricao;
+    document.getElementById('resgatesLoading').style.display = '';
+    document.getElementById('resgatesConteudo').style.display = 'none';
+    var modal = new bootstrap.Modal(document.getElementById('modalResgates'));
+    modal.show();
+    // Buscar resgates via AJAX
+    fetch('index.php?route=admin/materiais/getResgatesAjax&id=' + materialId)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('resgatesLoading').style.display = 'none';
+            if (data.success && Array.isArray(data.resgates)) {
+                let html = '<table class="table table-bordered table-sm">';
+                html += '<thead><tr><th>Solicitante</th><th>Data/Hora</th><th>Status</th><th>Ação</th></tr></thead><tbody>';
+                data.resgates.forEach(resgate => {
+                    html += '<tr>' +
+                        '<td>' + resgate.nome_usuario + '</td>' +
+                        '<td>' + resgate.data_solicitacao + '</td>' +
+                        '<td>' + resgate.status + '</td>' +
+                        '<td>';
+                    if (resgate.status === 'aguardando_retirada') {
+                        html += '<button class="btn btn-success btn-sm" onclick="marcarRetirado(' + resgate.id + ',' + materialId + ')">Marcar Retirado</button>';
+                    }
+                    html += '</td></tr>';
+                });
+                html += '</tbody></table>';
+                document.getElementById('resgatesConteudo').innerHTML = html;
+                document.getElementById('resgatesConteudo').style.display = '';
+            } else {
+                document.getElementById('resgatesConteudo').innerHTML = '<div class="alert alert-warning">Nenhum resgate encontrado.</div>';
+                document.getElementById('resgatesConteudo').style.display = '';
+            }
+        })
+        .catch(() => {
+            document.getElementById('resgatesLoading').style.display = 'none';
+            document.getElementById('resgatesConteudo').innerHTML = '<div class="alert alert-danger">Erro ao buscar resgates.</div>';
+            document.getElementById('resgatesConteudo').style.display = '';
+        });
+}
+
+function marcarRetirado(resgateId, materialId) {
+    if (!confirm('Tem certeza que deseja marcar este resgate como retirado? Os outros serão cancelados.')) return;
+    fetch('index.php?route=admin/materiais/marcarRetiradoAjax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resgate_id: resgateId, material_id: materialId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Resgate marcado como retirado e demais cancelados!');
+            abrirModalResgates(materialId, ''); // Atualiza lista
+        } else {
+            alert('Erro: ' + (data.message || 'Não foi possível marcar como retirado.'));
+        }
+    })
+    .catch(() => {
+        alert('Erro ao processar a solicitação.');
+    });
+}
+</script> 

@@ -1,5 +1,7 @@
-<!-- Hero Section -->
-<section class="hero-section">
+<!-- Conteúdo Principal -->
+<main>
+    <!-- Hero Section -->
+    <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8">
@@ -21,7 +23,7 @@
 <!-- Materiais Section -->
 <section id="materiais" class="py-5">
     <div class="container">
-        <div class="row mb-4">
+        <!--<div class="row mb-4">
             <div class="col-12">
                 <h2 class="text-center mb-3">
                     <i class="bi bi-box"></i> Materiais Disponíveis
@@ -30,7 +32,7 @@
                     Clique em "RESGATAR" para solicitar a retirada de qualquer material
                 </p>
             </div>
-        </div>
+        </div>-->
 
         <?php if (empty($materiais)): ?>
         <div class="row">
@@ -66,9 +68,15 @@
                             </div>
                         <?php endif; ?>
                         
-                        <span class="badge bg-success status-badge">
-                            <i class="bi bi-check-circle"></i> Disponível
-                        </span>
+                        <?php if ($material['status'] == 'resgatado'): ?>
+                            <span class="badge bg-warning status-badge">
+                                <i class="bi bi-hourglass-split"></i> Estoque em disputa
+                            </span>
+                        <?php else: ?>
+                            <span class="badge bg-success status-badge">
+                                <i class="bi bi-check-circle"></i> Disponível
+                            </span>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="card-body d-flex flex-column">
@@ -91,9 +99,17 @@
                             <small class="text-muted">
                                 <i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?>
                             </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-box"></i> <strong>Disponível:</strong> <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?>
+                            <?php if ($material['quantidade_disponivel'] <= 0): ?>
+                                <small class="text-muted">
+                                <i class="bi bi-box"></i> <strong>Material em disputa</strong>
+                                </small>
+                            <?php endif; ?>
+                            <?php if ($material['status'] == 'disponivel' || $material['status'] == 'aguardando_retirada'): ?>
+                                <small class="text-muted">
+                                    <i class="bi bi-box"></i> <strong>Disponível:</strong> <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?>
+                                </small>
                             </small>
+                            <?php endif; ?>
                         </div>
                         
                         <?php if (count($fotos) > 1): ?>
@@ -111,9 +127,17 @@
                                     data-bs-target="#resgateModal"
                                     data-material-id="<?= $material['id'] ?>"
                                     data-material-desc="<?= htmlspecialchars($material['descricao']) ?>"
-                                    data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>">
-                                <i class="bi bi-hand-index"></i> RESGATAR
+                                    data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
+                                    >
+                                    <?php if ($material['status'] == 'resgatado'): ?>
+                                        <i class="bi bi-hourglass-split" ></i> EM PROCESSO DE DOAÇÃO
+                                    <?php else: ?>
+                                        <i class="bi bi-hand-index"></i> RESGATAR
+                                    <?php endif; ?>
                             </button>
+                            <?php if ($material['status'] == 'resgatado'): ?>
+                                <p class="text-center text-muted" style="font-size: 0.8rem;">Entrar na disputa! Clique no botão acima.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -296,7 +320,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Configurar quantidade
         document.getElementById('quantidadeDisponivel').value = quantidadeDisponivel;
         document.getElementById('quantidadeDisponivelSpan').textContent = quantidadeDisponivel;
-        document.getElementById('quantidade_resgatada').max = quantidadeDisponivel;
+        
+        // Remover qualquer limitação de max para permitir disputa
+        document.getElementById('quantidade_resgatada').removeAttribute('max');
+        
+        // Adicionar mensagem de disputa se disponível for 0
+        const quantidadeInfo = document.getElementById('quantidadeInfo');
+        if (quantidadeDisponivel <= 0) {
+            quantidadeInfo.innerHTML = 'Disponível: <span id="quantidadeDisponivelSpan">0</span> <br><span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Este material está em disputa! Seu pedido entrará para análise.</span>';
+        } else {
+            quantidadeInfo.innerHTML = 'Disponível: <span id="quantidadeDisponivelSpan">' + quantidadeDisponivel + '</span>';
+        }
     });
     
     btnResgatar.addEventListener('click', function() {
@@ -381,6 +415,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Enviando requisição...');
         xhr.send(formData);
     });
+    
+    // Garantir que o max seja sempre removido quando o modal for aberto
+    resgateModal.addEventListener('shown.bs.modal', function() {
+        const inputQtd = document.getElementById('quantidade_resgatada');
+        if (inputQtd) {
+            inputQtd.removeAttribute('max');
+        }
+    });
 });
 
 // Galeria de fotos dos materiais
@@ -396,10 +438,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const galeriaNext = document.getElementById('galeriaNext');
     const galeriaContador = document.getElementById('galeriaContador');
 
-    // Adicionar onerror para placeholder
-    galeriaImagem.onerror = function() {
-        this.src = 'assets/img/placeholder.jpg';
-    };
 
     // Função para atualizar imagem
     function atualizarImagem() {
@@ -450,4 +488,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 })();
-</script> 
+</script>
+</main> 

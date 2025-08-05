@@ -43,7 +43,7 @@ class ResgateController {
     
     public function resgatar() {
         $material_id = $_GET['id'] ?? 0;
-        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status = 'disponivel' AND quantidade_disponivel > 0", [$material_id]);
+        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND (status = 'disponivel' OR status = 'resgatado')", [$material_id]);
         
         if (!$material) {
             redirect('index.php');
@@ -83,17 +83,17 @@ class ResgateController {
                 return;
             }
             
-            // Validar se o material ainda está disponível e tem quantidade suficiente
-            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status = 'disponivel' AND quantidade_disponivel >= ?", [$material_id, $quantidade_resgatada]);
+            // Buscar o material, permitindo tanto disponível quanto resgatado (para disputas)
+            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND (status = 'disponivel' OR status = 'resgatado')", [$material_id]);
             if (!$material) {
-                echo json_encode(['success' => false, 'message' => 'Material não está disponível ou quantidade insuficiente']);
+                echo json_encode(['success' => false, 'message' => 'Material não está disponível']);
                 return;
             }
             
             // Calcular data limite
             $data_limite = date('Y-m-d H:i:s', strtotime('+' . RESGATE_TIMEOUT_HOURS . ' hours'));
             
-            // Inserir resgate
+            // Inserir resgate normalmente
             $this->db->query("
                 INSERT INTO resgates (material_id, quantidade_resgatada, posto_graduacao, nome_guerra, contato, email, esquadrao, setor, data_limite)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -102,14 +102,18 @@ class ResgateController {
             // Atualizar quantidade disponível do material
             $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_resgatada;
             $novo_status = determinarStatusMaterial($nova_quantidade, $material['quantidade_total']);
-            
             $this->db->query("UPDATE materiais SET quantidade_disponivel = ?, status = ? WHERE id = ?", 
                 [$nova_quantidade, $novo_status, $material_id]);
             
+            // Mensagem de disputa
+            $mensagem = 'Resgate realizado com sucesso! Você tem até ' . RESGATE_TIMEOUT_HOURS . ' horas para retirar este item.';
+            if ($material['quantidade_disponivel'] < $quantidade_resgatada) {
+                $mensagem .= ' <b>Atenção:</b> Este material está em disputa. O administrador do setor irá decidir quem receberá o item.';
+            }
             
-            $response = ['success' => true, 'message' => 'Resgate realizado com sucesso! Você tem até ' . RESGATE_TIMEOUT_HOURS . ' horas para retirar este item.'];
-            error_log("Resposta de sucesso: " . json_encode($response));
+            $response = ['success' => true, 'message' => $mensagem];
             echo json_encode($response);
+            return;
             
         } catch (Exception $e) {
             $response = ['success' => false, 'message' => 'Erro interno do servidor: ' . $e->getMessage()];

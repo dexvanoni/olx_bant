@@ -79,9 +79,12 @@
                                     <i class="bi bi-box"></i> Quantidade a Resgatar *
                                 </label>
                                 <input type="number" class="form-control" id="quantidade_resgatada" name="quantidade_resgatada" 
-                                       min="1" max="<?= $material['quantidade_disponivel'] ?>" value="1" required>
+                                       min="1" value="1" required>
                                 <div class="form-text">
                                     Disponível: <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?>
+                                    <?php if ($material['quantidade_disponivel'] <= 0): ?>
+                                        <br><span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Este material está em disputa! Seu pedido entrará na fila de espera.</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">

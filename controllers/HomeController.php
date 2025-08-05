@@ -11,7 +11,6 @@ class HomeController {
             // Buscar materiais disponíveis com quantidade
             $materiais = $this->db->fetchAll("
                 SELECT * FROM materiais 
-                WHERE status = 'disponivel' AND quantidade_disponivel > 0
                 ORDER BY created_at DESC
             ");
             

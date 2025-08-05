@@ -201,4 +201,49 @@ class MaterialController {
         
         echo json_encode(['success' => true]);
     }
+
+    // AJAX: Buscar resgates de um material
+    public function getResgatesAjax() {
+        header('Content-Type: application/json');
+        if (!isset($_SESSION['admin_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Não autorizado']);
+            exit;
+        }
+        $material_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($material_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID inválido']);
+            exit;
+        }
+        $resgates = $this->db->fetchAll(
+            "SELECT r.id, r.nome_guerra as nome_usuario, r.data_resgate as data_solicitacao, r.status
+             FROM resgates r
+             WHERE r.material_id = ?
+             ORDER BY r.data_resgate ASC",
+            [$material_id]
+        );
+        echo json_encode(['success' => true, 'resgates' => $resgates]);
+        exit;
+    }
+
+    // AJAX: Marcar um resgate como retirado e cancelar os outros
+    public function marcarRetiradoAjax() {
+        header('Content-Type: application/json');
+        if (!isset($_SESSION['admin_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Não autorizado']);
+            exit;
+        }
+        $input = json_decode(file_get_contents('php://input'), true);
+        $resgate_id = isset($input['resgate_id']) ? (int)$input['resgate_id'] : 0;
+        $material_id = isset($input['material_id']) ? (int)$input['material_id'] : 0;
+        if ($resgate_id <= 0 || $material_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Dados inválidos']);
+            exit;
+        }
+        // Marcar o resgate selecionado como retirado
+        $this->db->execute("UPDATE resgates SET status = 'resgatado' WHERE id = ?", [$resgate_id]);
+        // Cancelar os outros resgates do mesmo material que ainda não foram retirados
+        $this->db->execute("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status = 'aguardando_retirada'", [$material_id, $resgate_id]);
+        echo json_encode(['success' => true]);
+        exit;
+    }
 } 

@@ -72,7 +72,7 @@
         .hero-section {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
             color: white;
-            padding: 4rem 0;
+            padding: 1rem 0;
         }
         
         .footer {
@@ -80,6 +80,42 @@
             color: white;
             padding: 2rem 0;
             margin-top: 3rem;
+            position: relative;
+            z-index: 1;
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Garantir que o body tenha altura mínima para empurrar o footer para baixo */
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Garantir que o conteúdo principal ocupe o espaço disponível */
+        main, .container {
+            flex: 1;
+        }
+        
+        /* Forçar visibilidade do footer */
+        footer.footer, .footer, #mainFooter {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 1 !important;
+            background-color: var(--dark-blue) !important;
+            color: white !important;
+            padding: 2rem 0 !important;
+            margin-top: 3rem !important;
+        }
+        
+        /* Garantir que o footer não seja afetado por outros estilos */
+        .footer * {
+            color: white !important;
         }
     </style>
 </head>

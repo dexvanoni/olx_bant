@@ -146,14 +146,7 @@
                     </div>
                 </div>
                 
-                <div class="d-flex align-items-center mb-3">
-                    <i class="bi bi-envelope text-success me-2"></i>
-                    <div>
-                        <small class="text-muted">Notificações</small><br>
-                        <strong>Email automático</strong>
-                    </div>
-                </div>
-                
+               
                 <div class="d-flex align-items-center">
                     <i class="bi bi-shield-check text-primary me-2"></i>
                     <div>
