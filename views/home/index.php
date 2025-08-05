@@ -241,7 +241,6 @@
 </div>
 
 <!-- Modal de Galeria de Fotos -->
- <!--
 <div class="modal fade" id="galeriaModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-dark text-white">
@@ -266,7 +265,6 @@
         </div>
     </div>
 </div>
--->
 
 <script>
 // Configurar modal de resgate
@@ -386,7 +384,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Galeria de fotos dos materiais
-/*
 (function() {
     // Armazenar fotos e índice atual
     let fotos = [];
@@ -453,5 +450,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 })();
-*/
 </script> 
