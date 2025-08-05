@@ -70,10 +70,10 @@
                         
                         <?php if ($material['status'] == 'resgatado'): ?>
                             <span class="badge bg-warning status-badge">
-                                <i class="bi bi-hourglass-split"></i> Estoque em disputa
+                                <i class="bi bi-hourglass-split"></i> Iniciado o processo
                             </span>
                             <?php elseif ($material['status'] == 'em_disputa'): ?>
-                                <span class="badge bg-success status-badge">
+                                <span class="badge bg-info status-badge">
                                     <i class="bi bi-check-circle"></i> Entrar em disputa
                                 </span>
                             <?php else: ?>
@@ -103,7 +103,7 @@
                             <small class="text-muted">
                                 <i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?>
                             </small><br>
-                            <?php if ($material['status'] == 'em_disputa'): ?>
+                            <?php if ($material['status'] == 'resgatado'): ?>
                                 <small class="text-muted">
                                 <i class="bi bi-box"></i> <strong>Material zerado! Entrar em disputa</strong>
                                 </small>
@@ -133,13 +133,13 @@
                                     data-material-desc="<?= htmlspecialchars($material['descricao']) ?>"
                                     data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
                                     >
-                                    <?php if ($material['status'] == 'resgatado'): ?>
+                                    <?php if ($material['status'] == 'em_disputa'): ?>
                                         <i class="bi bi-hourglass-split" ></i> EM ANÁLISE DE DISPUTA
                                     <?php else: ?>
                                         <i class="bi bi-hand-index"></i> RESGATAR
                                     <?php endif; ?>
                             </button>
-                            <?php if ($material['status'] == 'resgatado'): ?>
+                            <?php if ($material['status'] == 'em_disputa'): ?>
                                 <p class="text-center text-muted" style="font-size: 0.8rem;">Entrar na disputa! Clique no botão acima.</p>
                             <?php endif; ?>
                         </div>

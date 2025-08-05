@@ -102,7 +102,7 @@
                             $cor = $status_cores[$material['status']] ?? 'secondary';
                             ?>
                             
-                            <?php if ($material['quantidade_disponivel'] <= 0): ?>
+                            <?php if ($material['quantidade_disponivel'] < 0): ?>
                                 <small class="text-muted">
                                 <i class="bi bi-box"></i> <strong>Material em disputa</strong>
                                 </small>

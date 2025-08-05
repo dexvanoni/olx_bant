@@ -43,7 +43,7 @@ class ResgateController {
     
     public function resgatar() {
         $material_id = $_GET['id'] ?? 0;
-        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND (status = 'disponivel' OR status = 'resgatado')", [$material_id]);
+        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND (status = 'disponivel' OR status = 'resgatado' OR status = 'em_disputa')", [$material_id]);
         
         if (!$material) {
             redirect('index.php');
@@ -85,8 +85,8 @@ class ResgateController {
                 return;
             }
             
-            // Buscar o material, permitindo disponível, resgatado, mas não em disputa
-            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado')", [$material_id]);
+            // Buscar o material, permitindo disponível, resgatado, E em disputa
+            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado', 'em_disputa')", [$material_id]);
             if (!$material) {
                 echo json_encode(['success' => false, 'message' => 'Material não está disponível']);
                 return;
