@@ -14,7 +14,7 @@ class HomeController {
             // Buscar materiais disponíveis com quantidade (não mostrar em disputa)
             $materiais = $this->db->fetchAll("
                 SELECT * FROM materiais 
-                WHERE status IN ('disponivel', 'resgatado', 'em_disputa')
+                WHERE status IN ('disponivel', 'resgatado', 'em_disputa', 'aguardando_retirada')
                 ORDER BY created_at DESC
             ");
             

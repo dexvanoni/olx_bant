@@ -86,7 +86,7 @@ class ResgateController {
             }
             
             // Buscar o material, permitindo disponível, resgatado, E em disputa
-            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado', 'em_disputa')", [$material_id]);
+            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado', 'em_disputa', 'aguardando_retirada')", [$material_id]);
             if (!$material) {
                 echo json_encode(['success' => false, 'message' => 'Material não está disponível']);
                 return;
