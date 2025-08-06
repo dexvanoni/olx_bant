@@ -342,7 +342,7 @@
                 <button id="galeriaPrev" class="btn btn-light position-absolute top-50 start-0 translate-middle-y" style="z-index:2;" tabindex="-1">
                     <i class="bi bi-chevron-left fs-2"></i>
                 </button>
-                <img id="galeriaImagem" src="" class="img-fluid rounded shadow" style="max-height:70vh; max-width:100%; object-fit:contain; background:#222;" alt="Foto do material">
+                <img id="galeriaImagem" src="" class="img-fluid rounded shadow" style="max-height:70vh; max-width:100%; object-fit:contain; background:#222;" alt="Foto do material" onerror="this.onerror=null; this.src='assets/img/placeholder.jpg'; console.error('Erro ao carregar imagem:', this.src);">
                 <button id="galeriaNext" class="btn btn-light position-absolute top-50 end-0 translate-middle-y" style="z-index:2;" tabindex="-1">
                     <i class="bi bi-chevron-right fs-2"></i>
                 </button>
@@ -502,14 +502,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const galeriaNext = document.getElementById('galeriaNext');
     const galeriaContador = document.getElementById('galeriaContador');
 
-
     // Função para atualizar imagem
     function atualizarImagem() {
         if (!fotos.length) return;
-        galeriaImagem.src = fotos[fotoAtual];
+        // Garantir que o caminho está correto
+        let caminhoImagem = fotos[fotoAtual];
+        if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
+            caminhoImagem = '/' + caminhoImagem;
+        }
+        // Adicionar o diretório do projeto se não estiver presente
+        if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
+            caminhoImagem = '/olx_bant' + caminhoImagem;
+        }
+        galeriaImagem.src = caminhoImagem;
         galeriaContador.textContent = (fotoAtual+1) + ' / ' + fotos.length;
-        galeriaPrev.style.display = fotos.length > 1 ? '' : 'none';
-        galeriaNext.style.display = fotos.length > 1 ? '' : 'none';
+        // Sempre mostrar os controles, mesmo com 1 foto
+        galeriaPrev.style.display = '';
+        galeriaNext.style.display = '';
     }
 
     // Eventos de navegação
@@ -533,6 +542,21 @@ document.addEventListener('DOMContentLoaded', function() {
         galeriaImagem.src = '';
         galeriaContador.textContent = '';
     });
+    
+    // Adicionar evento para fechar modal manualmente
+    galeriaModal.addEventListener('click', function(e) {
+        if (e.target === galeriaModal || e.target.classList.contains('btn-close')) {
+            galeriaModal.classList.remove('show');
+            galeriaModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            
+            // Remover backdrop se existir
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    });
 
     // Delegação: clique na imagem do card
     document.addEventListener('click', function(e) {
@@ -543,12 +567,160 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch {
                 fotos = [];
             }
-            console.log('Fotos para galeria:', fotos); // <-- debug
             if (!Array.isArray(fotos) || !fotos.length) return;
+            
+            // Verificar se o modal existe no DOM
+            console.log('Modal no DOM:', document.body.contains(galeriaModal));
+            console.log('Modal position:', galeriaModal.offsetParent);
+            
             fotoAtual = 0;
             atualizarImagem();
-            const modal = new bootstrap.Modal(galeriaModal);
-            modal.show();
+            
+            try {
+                const modal = new bootstrap.Modal(galeriaModal);
+                modal.show();
+                
+                // Verificar se o modal foi exibido
+                setTimeout(() => {
+                    console.log('=== DEBUG MODAL ===');
+                    console.log('Modal element:', galeriaModal);
+                    console.log('Modal classes:', galeriaModal.className);
+                    console.log('Modal style display:', galeriaModal.style.display);
+                    console.log('Modal computed display:', window.getComputedStyle(galeriaModal).display);
+                    console.log('Modal visible:', galeriaModal.classList.contains('show'));
+                    console.log('Body modal-open:', document.body.classList.contains('modal-open'));
+                    
+                    // Se o modal não foi exibido, criar um modal simples
+                    if (!galeriaModal.classList.contains('show')) {
+                        console.log('Criando modal simples...');
+                        
+                        // Remover modal Bootstrap se existir
+                        const existingModal = document.getElementById('galeriaModal');
+                        if (existingModal) {
+                            existingModal.remove();
+                        }
+                        
+                        // Criar modal simples
+                        const simpleModal = document.createElement('div');
+                        simpleModal.id = 'simpleGaleriaModal';
+                        simpleModal.style.cssText = `
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background-color: rgba(0,0,0,0.8);
+                            z-index: 9999;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        `;
+                        
+                        // Conteúdo do modal
+                        /*
+                        simpleModal.innerHTML = `
+                            <div style="background: #222; padding: 20px; border-radius: 10px; max-width: 90%; max-height: 90%; position: relative;">
+                                <button id="closeModalBtn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; z-index: 10000;">×</button>
+                                <div style="text-align: center; position: relative;">
+                                    <button id="prevBtn" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; border-radius: 50%; ${fotos.length <= 1 ? 'display: none;' : ''}">‹</button>
+                                    <img id="modalImage" src="${galeriaImagem.src}" style="max-width: 100%; max-height: 70vh; object-fit: contain;" alt="Foto do material">
+                                    <button id="nextBtn" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; border-radius: 50%; ${fotos.length <= 1 ? 'display: none;' : ''}">›</button>
+                                    <div style="color: white; margin-top: 10px;">
+                                        ${(fotoAtual+1)} / ${fotos.length}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                            
+                        document.body.appendChild(simpleModal);
+                        */
+                        // Adicionar eventos aos controles
+                        const closeBtn = document.getElementById('closeModalBtn');
+                        const prevBtn = document.getElementById('prevBtn');
+                        const nextBtn = document.getElementById('nextBtn');
+                        const modalImg = document.getElementById('modalImage');
+                        
+                        // Fechar modal
+                        closeBtn.addEventListener('click', function() {
+                            simpleModal.remove();
+                        });
+                        
+                        // Navegação anterior
+                        if (prevBtn) {
+                            prevBtn.addEventListener('click', function() {
+                                if (fotos.length > 1) {
+                                    fotoAtual = (fotoAtual - 1 + fotos.length) % fotos.length;
+                                    let caminhoImagem = fotos[fotoAtual];
+                                    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
+                                        caminhoImagem = '/' + caminhoImagem;
+                                    }
+                                    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
+                                        caminhoImagem = '/olx_bant' + caminhoImagem;
+                                    }
+                                    modalImg.src = caminhoImagem;
+                                    document.querySelector('#simpleGaleriaModal div div div:last-child').textContent = `${(fotoAtual+1)} / ${fotos.length}`;
+                                }
+                            });
+                        }
+                        
+                        // Navegação próxima
+                        if (nextBtn) {
+                            nextBtn.addEventListener('click', function() {
+                                if (fotos.length > 1) {
+                                    fotoAtual = (fotoAtual + 1) % fotos.length;
+                                    let caminhoImagem = fotos[fotoAtual];
+                                    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
+                                        caminhoImagem = '/' + caminhoImagem;
+                                    }
+                                    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
+                                        caminhoImagem = '/olx_bant' + caminhoImagem;
+                                    }
+                                    modalImg.src = caminhoImagem;
+                                    document.querySelector('#simpleGaleriaModal div div div:last-child').textContent = `${(fotoAtual+1)} / ${fotos.length}`;
+                                }
+                            });
+                        }
+                        
+                        // Fechar modal ao clicar fora da imagem
+                        simpleModal.addEventListener('click', function(e) {
+                            if (e.target === simpleModal) {
+                                simpleModal.remove();
+                            }
+                        });
+                        
+                        console.log('Modal simples criado com controles');
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('Erro ao abrir modal:', error);
+                // Fallback: forçar exibição manual
+                galeriaModal.classList.add('show');
+                galeriaModal.style.display = 'block';
+                galeriaModal.style.zIndex = '1055';
+                galeriaModal.style.position = 'fixed';
+                galeriaModal.style.top = '0';
+                galeriaModal.style.left = '0';
+                galeriaModal.style.width = '100%';
+                galeriaModal.style.height = '100%';
+                galeriaModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                document.body.classList.add('modal-open');
+                
+                // Centralizar o conteúdo do modal
+                const modalDialog = galeriaModal.querySelector('.modal-dialog');
+                if (modalDialog) {
+                    modalDialog.style.position = 'relative';
+                    modalDialog.style.margin = '1.75rem auto';
+                    modalDialog.style.maxWidth = '90%';
+                    modalDialog.style.maxHeight = '90%';
+                }
+            }
+            
+            // Abordagem alternativa: alert temporário para confirmar que o código está sendo executado
+            setTimeout(() => {
+                if (!galeriaModal.classList.contains('show')) {
+                    console.log('Modal não apareceu, mas modal simples foi criado');
+                }
+            }, 500);
         }
     });
 })();
