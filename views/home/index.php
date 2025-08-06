@@ -503,6 +503,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const galeriaContador = document.getElementById('galeriaContador');
 
     // Função para atualizar imagem
+    const baseURL = location.hostname === 'localhost'
+    ? 'http://localhost/olx_bant' // ou porta usada no dev
+    : 'http://10.68.56.44:8087';
+
+function atualizarImagem() {
+    if (!fotos.length) return;
+
+    let caminhoImagem = fotos[fotoAtual];
+
+    // Garantir que o caminho comece com '/'
+    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
+        caminhoImagem = '/' + caminhoImagem;
+    }
+
+    // Corrigir diretório base se necessário
+    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
+        caminhoImagem = '/olx_bant' + caminhoImagem;
+    }
+
+    // Prepend baseURL se não for uma URL completa
+    if (!caminhoImagem.startsWith('http')) {
+        caminhoImagem = baseURL + caminhoImagem;
+    }
+
+    galeriaImagem.src = caminhoImagem;
+    galeriaContador.textContent = (fotoAtual + 1) + ' / ' + fotos.length;
+
+    galeriaPrev.style.display = '';
+    galeriaNext.style.display = '';
+}
+    /*
     function atualizarImagem() {
         if (!fotos.length) return;
         // Garantir que o caminho está correto
@@ -520,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         galeriaPrev.style.display = '';
         galeriaNext.style.display = '';
     }
-
+    */
     // Eventos de navegação
     galeriaPrev.addEventListener('click', function() {
         if (fotos.length) {
@@ -617,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                         
                         // Conteúdo do modal
+
                         /*
                         simpleModal.innerHTML = `
                             <div style="background: #222; padding: 20px; border-radius: 10px; max-width: 90%; max-height: 90%; position: relative;">
@@ -631,20 +663,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         `;
-                            
-                        document.body.appendChild(simpleModal);
                         */
+                        //document.body.appendChild(simpleModal);
+                        
                         // Adicionar eventos aos controles
-                        const closeBtn = document.getElementById('closeModalBtn');
+                        //const closeBtn = document.getElementById('closeModalBtn');
                         const prevBtn = document.getElementById('prevBtn');
                         const nextBtn = document.getElementById('nextBtn');
                         const modalImg = document.getElementById('modalImage');
                         
                         // Fechar modal
+                        /*
                         closeBtn.addEventListener('click', function() {
                             simpleModal.remove();
                         });
-                        
+                        */
                         // Navegação anterior
                         if (prevBtn) {
                             prevBtn.addEventListener('click', function() {
