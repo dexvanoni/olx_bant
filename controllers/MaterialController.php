@@ -21,6 +21,7 @@ class MaterialController {
                        COUNT(r.id) as total_resgates,
                        SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
+                       SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN r.quantidade_resgatada ELSE 0 END) as total_solicitado,
                        a.nome as admin_nome,
                        s.nome as setor_nome
                 FROM materiais m
@@ -37,6 +38,7 @@ class MaterialController {
                        COUNT(r.id) as total_resgates,
                        SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN 1 ELSE 0 END) as resgates_pendentes,
                        SUM(r.quantidade_resgatada) as total_resgatado,
+                       SUM(CASE WHEN r.status IN ('aguardando_retirada', 'em_disputa') THEN r.quantidade_resgatada ELSE 0 END) as total_solicitado,
                        a.nome as admin_nome,
                        s.nome as setor_nome
                 FROM materiais m
@@ -273,8 +275,17 @@ class MaterialController {
             exit;
         }
         
+        // Calcular quantidade disponível corretamente (considerando apenas resgates já retirados)
+        $resgates_retirados = $this->db->fetch("
+            SELECT SUM(quantidade_resgatada) as total_retirado 
+            FROM resgates 
+            WHERE material_id = ? AND status = 'retirado'
+        ", [$material_id]);
+        
+        $total_retirado = $resgates_retirados['total_retirado'] ?? 0;
+        $quantidade_disponivel = max(0, $material['quantidade_total'] - $total_retirado);
+        
         // Verificar se a quantidade ajustada não excede a quantidade disponível
-        $quantidade_disponivel = $material['quantidade_disponivel'];
         if ($quantidade_ajustada > $quantidade_disponivel) {
             echo json_encode(['success' => false, 'message' => 'Quantidade ajustada excede a quantidade disponível (' . $quantidade_disponivel . ')']);
             exit;
@@ -283,15 +294,27 @@ class MaterialController {
         // Marcar o resgate selecionado como retirado com quantidade ajustada
         $this->db->query("UPDATE resgates SET status = 'retirado', data_retirada = NOW(), quantidade_resgatada = ? WHERE id = ?", [$quantidade_ajustada, $resgate_id]);
         
-        // Se o material estava em disputa, encerrar disputa e cancelar demais resgates
+        // Recalcular a quantidade disponível após o resgate
+        $resgates_retirados = $this->db->fetch("
+            SELECT SUM(quantidade_resgatada) as total_retirado 
+            FROM resgates 
+            WHERE material_id = ? AND status = 'retirado'
+        ", [$material_id]);
+        $total_retirado = $resgates_retirados['total_retirado'] ?? 0;
+        $quantidade_disponivel_restante = max(0, $material['quantidade_total'] - $total_retirado);
+        
         if ($material['status'] === 'em_disputa') {
-            // Cancelar todos os outros resgates pendentes
-            $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
-            // Marcar disputa como encerrada
-            marcarDisputaEncerrada($material_id, $this->db);
+            if ($quantidade_disponivel_restante <= 0) {
+                // Estoque acabou: encerrar disputa e cancelar demais resgates
+                $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
+                marcarDisputaEncerrada($material_id, $this->db);
+            } else {
+                // Ainda há estoque: apenas atualizar quantidade_disponivel
+                $this->db->query("UPDATE materiais SET quantidade_disponivel = ? WHERE id = ?", [$quantidade_disponivel_restante, $material_id]);
+            }
         } else {
             // Material não estava em disputa, apenas atualizar quantidade
-            $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_ajustada;
+            $nova_quantidade = $quantidade_disponivel - $quantidade_ajustada;
             $novo_status = determinarStatusMaterial($nova_quantidade, $material['quantidade_total']);
             $this->db->query("UPDATE materiais SET quantidade_disponivel = ?, status = ? WHERE id = ?", [$nova_quantidade, $novo_status, $material_id]);
         }
