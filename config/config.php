@@ -6,6 +6,7 @@ define('UPLOAD_PATH', 'uploads/');
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
 define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif']);
 define('RESGATE_TIMEOUT_HOURS', 48); // 48 horas para retirada
+define('DISPUTA_TIMEOUT_HOURS', 48); // 48 horas para disputa
 
 // Verificar se a pasta uploads existe
 if (!is_dir(UPLOAD_PATH)) {
@@ -62,47 +63,79 @@ function verificarDisputa($material_id, $db) {
     $material = $db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
     if (!$material) return false;
     
-    // Contar resgates pendentes
+    // Calcular quantidade total solicitada em resgates pendentes
     $resgates_pendentes = $db->fetch("
-        SELECT COUNT(*) as total 
+        SELECT SUM(quantidade_resgatada) as total_solicitado 
         FROM resgates 
-        WHERE material_id = ? AND status = 'aguardando_retirada'
+        WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa')
     ", [$material_id]);
     
-    // Se há mais resgates pendentes que quantidade total, entrar em disputa
-    if ($resgates_pendentes['total'] > $material['quantidade_total']) {
+    $total_solicitado = $resgates_pendentes['total_solicitado'] ?? 0;
+    
+    // Se há mais quantidade solicitada que quantidade total disponível, entrar em disputa
+    if ($total_solicitado > $material['quantidade_total']) {
         return true;
     }
     
     return false;
 }
 
-// Função para processar disputas expiradas
-function processarDisputasExpiradas($db) {
-    $prazo_disputa = 24; // 24 horas
+// Função para verificar se disputa expirou (apenas para impedir novos resgates)
+function verificarDisputaExpirada($material_id, $db) {
+    $material = $db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+    if (!$material) return false;
     
-    // Buscar materiais em disputa há mais de 24 horas
+    // Se o material está em disputa e passou do prazo, não permite novos resgates
+    if ($material['status'] === 'em_disputa' && 
+        $material['data_limite_disputa'] && 
+        $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Função para verificar se material pode voltar para disponível (todos resgates cancelados)
+function verificarMaterialPodeVoltarDisponivel($material_id, $db) {
+    $material = $db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+    if (!$material) return false;
+    
+    // Se o material está em disputa, verificar se todos os resgates foram cancelados
+    if ($material['status'] === 'em_disputa') {
+        $resgates_ativos = $db->fetch("
+            SELECT COUNT(*) as total FROM resgates 
+            WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa')
+        ", [$material_id]);
+        
+        // Se não há resgates ativos, pode voltar para disponível
+        if ($resgates_ativos['total'] == 0) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// Função para processar materiais que podem voltar para disponível
+function processarMateriaisVoltarDisponivel($db) {
+    // Buscar materiais em disputa que podem voltar para disponível
     $materiais_disputa = $db->fetchAll("
-        SELECT DISTINCT m.id, m.descricao
-        FROM materiais m
-        JOIN resgates r ON m.id = r.material_id
+        SELECT m.* FROM materiais m
         WHERE m.status = 'em_disputa'
-        AND r.data_disputa < DATE_SUB(NOW(), INTERVAL ? HOUR)
-    ", [$prazo_disputa]);
+    ");
     
     foreach ($materiais_disputa as $material) {
-        // Cancelar todos os resgates pendentes do material
-        $db->query("
-            UPDATE resgates 
-            SET status = 'cancelado' 
-            WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa')
-        ", [$material['id']]);
-        
-        // Manter material como resgatado (não volta para disponível)
-        $db->query("
-            UPDATE materiais 
-            SET status = 'resgatado' 
-            WHERE id = ?
-        ", [$material['id']]);
+        if (verificarMaterialPodeVoltarDisponivel($material['id'], $db)) {
+            // Voltar material para disponível
+            $db->query("
+                UPDATE materiais 
+                SET status = 'disponivel', 
+                    quantidade_disponivel = quantidade_total,
+                    data_limite_disputa = NULL 
+                WHERE id = ?
+            ", [$material['id']]);
+        }
     }
 } 
+
+ 

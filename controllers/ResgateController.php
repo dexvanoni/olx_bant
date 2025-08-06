@@ -85,6 +85,22 @@ class ResgateController {
                 return;
             }
             
+            // Verificar se disputa expirou (impede novos resgates)
+            if (verificarDisputaExpirada($material_id, $this->db)) {
+                echo json_encode(['success' => false, 'message' => 'Este material está em disputa e o prazo para novos resgates expirou. Aguarde a decisão do administrador.']);
+                return;
+            }
+            
+            // Verificar se material está em disputa e não permite novos resgates
+            $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+            if ($material && $material['status'] === 'em_disputa') {
+                // Se a disputa expirou, não permite novos resgates
+                if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                    echo json_encode(['success' => false, 'message' => 'Este material está em disputa finalizada. Não é possível fazer novos resgates. Aguarde a decisão do administrador.']);
+                    return;
+                }
+            }
+            
             // Buscar o material, permitindo disponível, resgatado, E em disputa
             $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ? AND status IN ('disponivel', 'resgatado', 'em_disputa', 'aguardando_retirada')", [$material_id]);
             if (!$material) {
@@ -114,6 +130,14 @@ class ResgateController {
                     SET status = 'em_disputa', data_disputa = NOW() 
                     WHERE material_id = ? AND status = 'aguardando_retirada'
                 ", [$material_id]);
+                
+                // Definir data limite para a disputa
+                $data_limite_disputa = date('Y-m-d H:i:s', strtotime('+' . DISPUTA_TIMEOUT_HOURS . ' hours'));
+                $this->db->query("
+                    UPDATE materiais 
+                    SET data_limite_disputa = ? 
+                    WHERE id = ?
+                ", [$data_limite_disputa, $material_id]);
             }
             
             $this->db->query("UPDATE materiais SET quantidade_disponivel = ?, status = ? WHERE id = ?", 

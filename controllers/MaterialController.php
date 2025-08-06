@@ -214,18 +214,41 @@ class MaterialController {
             echo json_encode(['success' => false, 'message' => 'ID inválido']);
             exit;
         }
+        
+        // Buscar informações do material com quantidade atualizada
+        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+        
+        // Calcular quantidade disponível atual (considerando resgates já retirados)
+        if ($material) {
+            $resgates_retirados = $this->db->fetch("
+                SELECT SUM(quantidade_resgatada) as total_retirado 
+                FROM resgates 
+                WHERE material_id = ? AND status = 'retirado'
+            ", [$material_id]);
+            
+            $total_retirado = $resgates_retirados['total_retirado'] ?? 0;
+            $material['quantidade_disponivel'] = max(0, $material['quantidade_total'] - $total_retirado);
+        }
+        
         $resgates = $this->db->fetchAll(
-            "SELECT r.id, r.nome_guerra as nome_usuario, r.data_resgate as data_solicitacao, r.status, r.justificativa, r.posto_graduacao, r.esquadrao, r.setor, r.contato
+            "SELECT r.id, r.nome_guerra as nome_usuario, r.data_resgate as data_solicitacao, r.status, r.justificativa, r.quantidade_resgatada, r.posto_graduacao, r.esquadrao, r.setor, r.contato, r.data_disputa
              FROM resgates r
              WHERE r.material_id = ?
              ORDER BY r.data_resgate ASC",
             [$material_id]
         );
-        echo json_encode(['success' => true, 'resgates' => $resgates]);
+        
+        $response = [
+            'success' => true, 
+            'resgates' => $resgates,
+            'material' => $material
+        ];
+        
+        echo json_encode($response);
         exit;
     }
 
-    // AJAX: Marcar um resgate como retirado e cancelar os outros
+    // AJAX: Marcar um resgate como retirado e gerenciar disputa
     public function marcarRetiradoAjax() {
         header('Content-Type: application/json');
         if (!isset($_SESSION['admin_id'])) {
@@ -235,20 +258,44 @@ class MaterialController {
         $input = json_decode(file_get_contents('php://input'), true);
         $resgate_id = isset($input['resgate_id']) ? (int)$input['resgate_id'] : 0;
         $material_id = isset($input['material_id']) ? (int)$input['material_id'] : 0;
-        if ($resgate_id <= 0 || $material_id <= 0) {
+        $quantidade_ajustada = isset($input['quantidade_ajustada']) ? (int)$input['quantidade_ajustada'] : 0;
+        if ($resgate_id <= 0 || $material_id <= 0 || $quantidade_ajustada <= 0) {
             echo json_encode(['success' => false, 'message' => 'Dados inválidos']);
             exit;
         }
-        // Marcar o resgate selecionado como retirado
-        $this->db->query("UPDATE resgates SET status = 'retirado' WHERE id = ?", [$resgate_id]);
-        // Cancelar os outros resgates do mesmo material que ainda não foram retirados
-        $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
         
-        // Se o material estava em disputa, resolver a disputa
-        $material = $this->db->fetch("SELECT status FROM materiais WHERE id = ?", [$material_id]);
-        if ($material && $material['status'] === 'em_disputa') {
-            $this->db->query("UPDATE materiais SET status = 'resgatado' WHERE id = ?", [$material_id]);
+        // Buscar informações do resgate e material
+        $resgate = $this->db->fetch("SELECT * FROM resgates WHERE id = ?", [$resgate_id]);
+        $material = $this->db->fetch("SELECT * FROM materiais WHERE id = ?", [$material_id]);
+        
+        if (!$resgate || !$material) {
+            echo json_encode(['success' => false, 'message' => 'Resgate ou material não encontrado']);
+            exit;
         }
+        
+        // Verificar se a quantidade ajustada não excede a quantidade disponível
+        $quantidade_disponivel = $material['quantidade_disponivel'];
+        if ($quantidade_ajustada > $quantidade_disponivel) {
+            echo json_encode(['success' => false, 'message' => 'Quantidade ajustada excede a quantidade disponível (' . $quantidade_disponivel . ')']);
+            exit;
+        }
+        
+        // Marcar o resgate selecionado como retirado com quantidade ajustada
+        $this->db->query("UPDATE resgates SET status = 'retirado', data_retirada = NOW(), quantidade_resgatada = ? WHERE id = ?", [$quantidade_ajustada, $resgate_id]);
+        
+        // Se o material estava em disputa, encerrar disputa e cancelar demais resgates
+        if ($material['status'] === 'em_disputa') {
+            // Cancelar todos os outros resgates pendentes
+            $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
+            // Atualizar material para resgatado, zerar quantidade e limpar data_limite_disputa
+            $this->db->query("UPDATE materiais SET status = 'resgatado', quantidade_disponivel = 0, data_limite_disputa = NULL WHERE id = ?", [$material_id]);
+        } else {
+            // Material não estava em disputa, apenas atualizar quantidade
+            $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_ajustada;
+            $novo_status = determinarStatusMaterial($nova_quantidade, $material['quantidade_total']);
+            $this->db->query("UPDATE materiais SET quantidade_disponivel = ?, status = ? WHERE id = ?", [$nova_quantidade, $novo_status, $material_id]);
+        }
+        
         echo json_encode(['success' => true]);
         exit;
     }

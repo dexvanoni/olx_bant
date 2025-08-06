@@ -73,9 +73,22 @@
                                 <i class="bi bi-hourglass-split"></i> Iniciado o processo
                             </span>
                             <?php elseif ($material['status'] == 'em_disputa'): ?>
-                                <span class="badge bg-info status-badge">
-                                    <i class="bi bi-check-circle"></i> Entrar em disputa
-                                </span>
+                                <?php 
+                                // Verificar se a disputa expirou
+                                $disputa_expirada = false;
+                                if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                                    $disputa_expirada = true;
+                                }
+                                ?>
+                                <?php if ($disputa_expirada): ?>
+                                    <span class="badge bg-danger status-badge">
+                                        <i class="bi bi-clock-history"></i> Disputa Finalizada
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning status-badge">
+                                        <i class="bi bi-exclamation-triangle"></i> Em Disputa
+                                    </span>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span class="badge bg-success status-badge">
                                     <i class="bi bi-check-circle"></i> Disponível
@@ -112,7 +125,25 @@
                                 <small class="text-muted">
                                     <i class="bi bi-box"></i> <strong>Disponível:</strong> <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?>
                                 </small>
-                            </small>
+                            <?php endif; ?>
+                            <?php if ($material['status'] == 'em_disputa'): ?>
+                                <?php 
+                                $disputa_expirada = false;
+                                if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                                    $disputa_expirada = true;
+                                }
+                                ?>
+                                <?php if ($disputa_expirada): ?>
+                                    <small class="text-danger">
+                                        <i class="bi bi-clock-history"></i> <strong>Disputa finalizada - Aguardando decisão do administrador</strong>
+                                    </small>
+                                <?php else: ?>
+                                    <small class="text-warning">
+                                        <i class="bi bi-exclamation-triangle"></i> <strong>Em disputa - Prazo: 
+                                            <?= $material['data_limite_disputa'] ? date('d/m/Y H:i', strtotime($material['data_limite_disputa'])) : '-' ?>
+                                        </strong>
+                                    </small>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                         
@@ -125,22 +156,37 @@
                         <?php endif; ?>
                         
                         <div class="mt-auto">
-                            <button type="button" 
-                                    class="btn btn-primary w-100" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#resgateModal"
-                                    data-material-id="<?= $material['id'] ?>"
-                                    data-material-desc="<?= htmlspecialchars($material['descricao']) ?>"
-                                    data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
-                                    >
-                                    <?php if ($material['status'] == 'em_disputa'): ?>
-                                        <i class="bi bi-hourglass-split" ></i> EM ANÁLISE DE DISPUTA
-                                    <?php else: ?>
-                                        <i class="bi bi-hand-index"></i> RESGATAR
-                                    <?php endif; ?>
-                            </button>
-                            <?php if ($material['status'] == 'em_disputa'): ?>
-                                <p class="text-center text-muted" style="font-size: 0.8rem;">Entrar na disputa! Clique no botão acima.</p>
+                            <?php 
+                            $disputa_expirada = false;
+                            if ($material['status'] == 'em_disputa' && $material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                                $disputa_expirada = true;
+                            }
+                            ?>
+                            
+                            <?php if ($material['status'] == 'em_disputa' && $disputa_expirada): ?>
+                                <!-- Disputa expirada - não permite novos resgates -->
+                                <button type="button" class="btn btn-secondary w-100" disabled>
+                                    <i class="bi bi-clock-history"></i> DISPUTA FINALIZADA
+                                </button>
+                                <p class="text-center text-muted" style="font-size: 0.8rem;">Aguardando decisão do administrador</p>
+                            <?php else: ?>
+                                <button type="button" 
+                                        class="btn btn-primary w-100" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#resgateModal"
+                                        data-material-id="<?= $material['id'] ?>"
+                                        data-material-desc="<?= htmlspecialchars($material['descricao']) ?>"
+                                        data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
+                                        >
+                                        <?php if ($material['status'] == 'em_disputa'): ?>
+                                            <i class="bi bi-exclamation-triangle"></i> ENTRAR NA DISPUTA
+                                        <?php else: ?>
+                                            <i class="bi bi-hand-index"></i> RESGATAR
+                                        <?php endif; ?>
+                                </button>
+                                <?php if ($material['status'] == 'em_disputa'): ?>
+                                    <p class="text-center text-muted" style="font-size: 0.8rem;">Clique para participar da disputa!</p>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
