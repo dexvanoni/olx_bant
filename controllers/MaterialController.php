@@ -287,8 +287,8 @@ class MaterialController {
         if ($material['status'] === 'em_disputa') {
             // Cancelar todos os outros resgates pendentes
             $this->db->query("UPDATE resgates SET status = 'cancelado' WHERE material_id = ? AND id != ? AND status IN ('aguardando_retirada', 'em_disputa')", [$material_id, $resgate_id]);
-            // Atualizar material para resgatado, zerar quantidade e limpar data_limite_disputa
-            $this->db->query("UPDATE materiais SET status = 'resgatado', quantidade_disponivel = 0, data_limite_disputa = NULL WHERE id = ?", [$material_id]);
+            // Marcar disputa como encerrada
+            marcarDisputaEncerrada($material_id, $this->db);
         } else {
             // Material não estava em disputa, apenas atualizar quantidade
             $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_ajustada;

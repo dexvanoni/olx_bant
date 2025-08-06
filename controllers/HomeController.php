@@ -15,6 +15,7 @@ class HomeController {
             $materiais = $this->db->fetchAll("
                 SELECT m.* FROM materiais m
                 WHERE m.status IN ('disponivel', 'aguardando_retirada', 'resgatado')
+                AND m.status != 'disputa_encerrada'
                 OR (m.status = 'em_disputa' AND (
                     -- Material em disputa que ainda não expirou (pode receber novos resgates)
                     (m.data_limite_disputa IS NULL OR m.data_limite_disputa > NOW())

@@ -57,6 +57,17 @@ function determinarStatusMaterial($quantidade_disponivel, $quantidade_total) {
     }
 }
 
+// Função para marcar material como disputa encerrada
+function marcarDisputaEncerrada($material_id, $db) {
+    $db->query("
+        UPDATE materiais 
+        SET status = 'disputa_encerrada', 
+            quantidade_disponivel = 0,
+            data_limite_disputa = NULL 
+        WHERE id = ?
+    ", [$material_id]);
+}
+
 // Função para verificar se material deve entrar em disputa
 function verificarDisputa($material_id, $db) {
     // Buscar informações do material e seus resgates

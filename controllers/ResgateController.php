@@ -117,11 +117,11 @@ class ResgateController {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ", [$material_id, $quantidade_resgatada, $posto_graduacao, $nome_guerra, $contato, $email, $esquadrao, $setor, $justificativa, $data_limite]);
             
-            // Atualizar quantidade disponível do material
+            // Definir valores padrão
             $nova_quantidade = $material['quantidade_disponivel'] - $quantidade_resgatada;
             $novo_status = determinarStatusMaterial($nova_quantidade, $material['quantidade_total']);
             
-            // Verificar se deve entrar em disputa
+            // Verificar se deve entrar em disputa (após inserir o resgate)
             if (verificarDisputa($material_id, $this->db)) {
                 $novo_status = 'em_disputa';
                 // Marcar data da disputa nos resgates pendentes

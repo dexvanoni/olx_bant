@@ -97,7 +97,8 @@
                             $status_cores = [
                                 'disponivel' => 'success',
                                 'aguardando_retirada' => 'warning',
-                                'resgatado' => 'info'
+                                'resgatado' => 'info',
+                                'disputa_encerrada' => 'danger'
                             ];
                             $cor = $status_cores[$material['status']] ?? 'secondary';
                             ?>
@@ -108,6 +109,10 @@
                                 </small>
                             <?php else: ?>
                                 <span class="badge bg-<?= $cor ?>"><?= ucfirst(str_replace('_', ' ', $material['status'])) ?></span>
+                            <?php endif; ?>
+                            
+                            <?php if ($material['status'] == 'disputa_encerrada'): ?>
+                                <span class="badge bg-danger">Disputa Encerrada</span>
                             <?php endif; ?>
                         </td>
                         <td>
