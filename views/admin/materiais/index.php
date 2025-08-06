@@ -35,7 +35,7 @@
                 </thead>
                 <tbody>
                     <?php foreach ($materiais as $material): ?>
-                    <tr<?php if ($material['total_solicitado'] > $material['quantidade_total']): ?> class="table-danger"<?php endif; ?>>
+                    <tr<?php if ($material['total_solicitado'] > $material['quantidade_total'] || $material['status'] === 'em_disputa'): ?> class="table-danger"<?php endif; ?>>
                         <td><?= $material['id'] ?></td>
                         <td>
                             <?php 
@@ -138,7 +138,7 @@
                                         onclick="confirmDelete(<?= $material['id'] ?>, '<?= htmlspecialchars($material['descricao']) ?>')">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                <?php if ($material['total_solicitado'] > $material['quantidade_total']): ?>
+                                <?php if ($material['total_solicitado'] > $material['quantidade_total'] || $material['status'] === 'em_disputa'): ?>
                                     <button type="button" 
                                             class="btn btn-sm btn-warning" 
                                             title="Ver Resgates"

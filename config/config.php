@@ -78,7 +78,7 @@ function verificarDisputa($material_id, $db) {
     $resgates_pendentes = $db->fetch("
         SELECT SUM(quantidade_resgatada) as total_solicitado 
         FROM resgates 
-        WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa')
+        WHERE material_id = ? AND status IN ('aguardando_retirada', 'em_disputa', 'retirado')
     ", [$material_id]);
     
     $total_solicitado = $resgates_pendentes['total_solicitado'] ?? 0;
