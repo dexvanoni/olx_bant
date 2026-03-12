@@ -38,4 +38,10 @@ class HomeController {
             echo "Erro no HomeController: " . $e->getMessage();
         }
     }
+
+    public function tutorial() {
+        include 'views/layout/header.php';
+        include 'views/tutorial/index.php';
+        include 'views/layout/footer.php';
+    }
 } 

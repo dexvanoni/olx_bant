@@ -116,6 +116,10 @@ switch ($route) {
         $controller = new ResgateController();
         $controller->salvar();
         break;
+    case 'tutorial':
+        $controller = new HomeController();
+        $controller->tutorial();
+        break;
     default:
         $controller = new HomeController();
         $controller->index();

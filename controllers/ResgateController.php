@@ -146,7 +146,7 @@ class ResgateController {
             // Mensagem de disputa
             $mensagem = 'Resgate realizado com sucesso! Você tem até ' . RESGATE_TIMEOUT_HOURS . ' horas para retirar este item.';
             if ($material['quantidade_disponivel'] < $quantidade_resgatada) {
-                $mensagem .= ' <b>Atenção:</b> Este material está em disputa. O administrador do setor irá decidir quem receberá o item.';
+                $mensagem .= ' <b>Atenção:</b> Este material está em disputa. O cadastrador do item irá resolver, em consonância com o Dono da Carga.';
             }
             
             $response = ['success' => true, 'message' => $mensagem];
@@ -276,6 +276,8 @@ class ResgateController {
             $query .= " AND m.setor_id = ?";
             $params[] = $admin['setor_id'];
         }
+
+        
         
         $resgate = $this->db->fetch($query, $params);
         

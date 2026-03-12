@@ -10,11 +10,15 @@
                 </h1>
                 <p class="lead mb-4">
                     Base Aérea de Natal - BANT<br>
-                    Encontre e resgate materiais disponíveis para doação
+                    Encontre e resgate materiais disponíveis para doação<br>
+                    Problemas e Sugestões: gustavogca@fab.mil.br | vanonidvv@fab.mil.br<br>
                 </p>
+                <a href="index.php?route=tutorial" class="btn btn-light btn-lg">
+                    <i class="bi bi-book"></i> Ver Tutorial de Uso
+                </a>
             </div>
             <div class="col-lg-4 text-center">
-                <i class="bi bi-building display-1 text-light opacity-75"></i>
+                <img src="bant.png" alt="BANT - Base Aérea de Natal" class="img-fluid" style="max-height: 180px;">
             </div>
         </div>
     </div>
@@ -26,11 +30,8 @@
         <!--<div class="row mb-4">
             <div class="col-12">
                 <h2 class="text-center mb-3">
-                    <i class="bi bi-box"></i> Materiais Disponíveis
+                    <i class="bi bi-box"></i> ATENÇÃO: Sistema em TESTE! Dados fictícios!
                 </h2>
-                <p class="text-center text-muted">
-                    Clique em "RESGATAR" para solicitar a retirada de qualquer material
-                </p>
             </div>
         </div>-->
 
@@ -86,7 +87,7 @@
                                     </span>
                                 <?php else: ?>
                                     <span class="badge bg-warning status-badge">
-                                        <i class="bi bi-exclamation-triangle"></i> Em Disputa
+                                        <i class="bi bi-exclamation-triangle"></i> Em Seleção
                                     </span>
                                 <?php endif; ?>
                             <?php else: ?>
@@ -118,7 +119,7 @@
                             </small><br>
                             <?php if ($material['status'] == 'resgatado'): ?>
                                 <small class="text-muted">
-                                <i class="bi bi-box"></i> <strong>Material zerado! Entrar em disputa</strong>
+                                <i class="bi bi-box"></i> <strong>Material zerado! Entrar em seleção</strong>
                                 </small>
                             <?php endif; ?>
                             <?php if ($material['status'] == 'disponivel' || $material['status'] == 'aguardando_retirada'): ?>
@@ -139,7 +140,7 @@
                                     </small>
                                 <?php else: ?>
                                     <small class="text-warning">
-                                        <i class="bi bi-exclamation-triangle"></i> <strong>Em disputa - Prazo: 
+                                        <i class="bi bi-exclamation-triangle"></i> <strong>Em Seleção - Prazo: 
                                             <?= $material['data_limite_disputa'] ? date('d/m/Y H:i', strtotime($material['data_limite_disputa'])) : '-' ?>
                                         </strong>
                                     </small>
@@ -179,13 +180,13 @@
                                         data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
                                         >
                                         <?php if ($material['status'] == 'em_disputa'): ?>
-                                            <i class="bi bi-exclamation-triangle"></i> ENTRAR NA DISPUTA
+                                            <i class="bi bi-exclamation-triangle"></i> ENTRAR NA SELEÇÃO
                                         <?php else: ?>
                                             <i class="bi bi-hand-index"></i> RESGATAR
                                         <?php endif; ?>
                                 </button>
                                 <?php if ($material['status'] == 'em_disputa'): ?>
-                                    <p class="text-center text-muted" style="font-size: 0.8rem;">Clique para participar da disputa!</p>
+                                    <p class="text-center text-muted" style="font-size: 0.8rem;">Clique para participar da seleção!</p>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -391,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Adicionar mensagem de disputa se disponível for 0
         const quantidadeInfo = document.getElementById('quantidadeInfo');
         if (quantidadeDisponivel <= 0) {
-            quantidadeInfo.innerHTML = 'Disponível: <span id="quantidadeDisponivelSpan">0</span> <br><span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Este material está em disputa! Seu pedido entrará para análise.</span>';
+            quantidadeInfo.innerHTML = 'Disponível: <span id="quantidadeDisponivelSpan">0</span> <br><span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> Este material está em seleção! Seu pedido entrará para análise.</span>';
         } else {
             quantidadeInfo.innerHTML = 'Disponível: <span id="quantidadeDisponivelSpan">' + quantidadeDisponivel + '</span>';
         }
@@ -519,7 +520,7 @@ function atualizarImagem() {
 
     // Corrigir diretório base se necessário
     if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
-        caminhoImagem = '/olx_bant' + caminhoImagem;
+        caminhoImagem = '/' + caminhoImagem;
     }
 
     // Prepend baseURL se não for uma URL completa

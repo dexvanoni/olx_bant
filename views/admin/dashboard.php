@@ -112,6 +112,12 @@
                         </a>
                     </div>
                     <div class="col-md-6">
+                        <a href="index.php?route=tutorial" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                            <i class="bi bi-book fs-1 mb-2"></i>
+                            <span>Tutorial</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
                         <a href="index.php" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
                             <i class="bi bi-eye fs-1 mb-2"></i>
                             <span>Ver Site</span>

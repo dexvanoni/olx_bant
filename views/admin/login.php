@@ -35,12 +35,7 @@
                         </button>
                     </form>
                     
-                    <div class="text-center mt-4">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle"></i> 
-                            Credenciais padrão: admin / admin123
-                        </small>
-                    </div>
+
                 </div>
             </div>
         </div>

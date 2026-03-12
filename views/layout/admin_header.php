@@ -91,6 +91,12 @@ if (!isset($route)) {
         <hr>
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
+                <a href="index.php?route=tutorial" class="nav-link <?= $route === 'tutorial' ? 'active' : '' ?>">
+                    <i class="bi bi-book me-2"></i>
+                    Tutorial
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="index.php?route=admin" class="nav-link <?= $route === 'admin' ? 'active' : '' ?>">
                     <i class="bi bi-speedometer2 me-2"></i>
                     Dashboard
@@ -149,6 +155,11 @@ if (!isset($route)) {
                 
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.php?route=tutorial">
+                                <i class="bi bi-book"></i> Tutorial
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="index.php">
                                 <i class="bi bi-house"></i> Voltar ao Site

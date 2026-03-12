@@ -5,10 +5,10 @@
             <div class="row">
                 <div class="col-md-6">
                     <h5><i class="bi bi-building"></i> Base Aérea de Natal</h5>
-                    <p>Sistema de Resgate de Materiais</p>
+                    <p>Sistema de Resgate de Materiais | Criado por 2S Vanoni - ETIC</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p>&copy; 2024 BANT. Todos os direitos reservados.</p>
+                    <p>&copy; 2026 BANT. Todos os direitos reservados.</p>
                 </div>
             </div>
         </div>

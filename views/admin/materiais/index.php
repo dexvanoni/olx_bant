@@ -209,7 +209,7 @@ function abrirModalResgates(materialId, descricao, quantidade_total) {
                     html += '<i class="bi bi-exclamation-triangle"></i> <strong>Material em Disputa:</strong> ';
                     html += 'Quantidade solicitada (' + data.resgates.reduce((sum, r) => sum + (r.quantidade_resgatada || 0), 0) + ') ';
                     html += 'excede a quantidade total (' + data.material.quantidade_total + '). ';
-                    html += '<strong>O administrador deve decidir quem receberá o material.</strong> ';
+                    html += '<strong>O cadastrador do item deve resolver a disputa, em consonância com o Dono da Carga.</strong> ';
                     html += '<br><strong>Quantidade ainda disponível: ' + (data.material.quantidade_disponivel || 0) + '</strong>';
                     html += '<br><small><i class="bi bi-info-circle"></i> <strong>Dica:</strong> Use o campo "Qtn. Ajustada" para definir a quantidade que será realmente retirada.</small>';
                     html += '</div>';

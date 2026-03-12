@@ -101,9 +101,11 @@
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="marcarRetirado(<?= $resgate['id'] ?>)" title="Marcar como Retirado">
                                     <i class="bi bi-check-circle"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="cancelarResgate(<?= $resgate['id'] ?>)" title="Cancelar Resgate">
+                                <!--
+				<button type="button" class="btn btn-sm btn-outline-danger" onclick="cancelarResgate(<?= $resgate['id'] ?>)" title="Cancelar Resgate">
                                     <i class="bi bi-x-circle"></i>
                                 </button>
+				-->
                                 <?php endif; ?>
                             </div>
                         </td>

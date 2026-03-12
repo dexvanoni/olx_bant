@@ -139,6 +139,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="index.php?route=tutorial">
+                            <i class="bi bi-book"></i> Tutorial
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="index.php?route=admin">
                             <i class="bi bi-gear"></i> Administração
                         </a>
