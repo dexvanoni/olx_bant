@@ -55,16 +55,14 @@
             ?>
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card material-card h-100">
-                    <div class="position-relative">
+                    <div class="position-relative galeria-trigger" data-fotos='<?= $fotos_json ?>' style="cursor:<?= !empty($fotos) ? 'zoom-in' : 'default' ?>;">
                         <?php if ($foto_principal): ?>
                             <img src="<?= UPLOAD_PATH . $foto_principal ?>" 
                                  class="card-img-top material-image" 
                                  alt="Foto do material"
-                                 data-fotos='<?= $fotos_json ?>'
-                                 style="cursor:zoom-in;"
                                  onerror="this.src='assets/img/placeholder.jpg'">
                         <?php else: ?>
-                            <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center" style="cursor:zoom-in;" data-fotos='<?= $fotos_json ?>'>
+                            <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
                                 <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
                             </div>
                         <?php endif; ?>
@@ -329,32 +327,6 @@
     </div>
 </div>
 
-<!-- Modal de Galeria de Fotos -->
-<div class="modal fade" id="galeriaModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content bg-dark text-white">
-            <div class="modal-header border-0">
-                <h5 class="modal-title">
-                    <i class="bi bi-images"></i> Fotos do Material
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center position-relative">
-                <button id="galeriaPrev" class="btn btn-light position-absolute top-50 start-0 translate-middle-y" style="z-index:2;" tabindex="-1">
-                    <i class="bi bi-chevron-left fs-2"></i>
-                </button>
-                <img id="galeriaImagem" src="" class="img-fluid rounded shadow" style="max-height:70vh; max-width:100%; object-fit:contain; background:#222;" alt="Foto do material" onerror="this.onerror=null; this.src='assets/img/placeholder.jpg'; console.error('Erro ao carregar imagem:', this.src);">
-                <button id="galeriaNext" class="btn btn-light position-absolute top-50 end-0 translate-middle-y" style="z-index:2;" tabindex="-1">
-                    <i class="bi bi-chevron-right fs-2"></i>
-                </button>
-            </div>
-            <div class="modal-footer justify-content-center bg-dark border-0">
-                <span id="galeriaContador" class="text-white-50 small"></span>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 // Configurar modal de resgate
 document.addEventListener('DOMContentLoaded', function() {
@@ -490,271 +462,115 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Galeria de fotos dos materiais
+// Galeria de fotos - Lightbox customizado (evita conflitos com Bootstrap)
 (function() {
-    // Armazenar fotos e índice atual
     let fotos = [];
     let fotoAtual = 0;
+    let lightboxEl = null;
+    let keydownHandler = null;
 
-    // Elementos do modal
-    const galeriaModal = document.getElementById('galeriaModal');
-    const galeriaImagem = document.getElementById('galeriaImagem');
-    const galeriaPrev = document.getElementById('galeriaPrev');
-    const galeriaNext = document.getElementById('galeriaNext');
-    const galeriaContador = document.getElementById('galeriaContador');
-
-    // Função para atualizar imagem
-    const baseURL = location.hostname === 'localhost'
-    ? 'http://localhost/olx_bant' // ou porta usada no dev
-    : 'http://10.68.56.44:8087';
-
-function atualizarImagem() {
-    if (!fotos.length) return;
-
-    let caminhoImagem = fotos[fotoAtual];
-
-    // Garantir que o caminho comece com '/'
-    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
-        caminhoImagem = '/' + caminhoImagem;
+    function fecharLightbox() {
+        if (keydownHandler) {
+            document.removeEventListener('keydown', keydownHandler);
+            keydownHandler = null;
+        }
+        if (lightboxEl && lightboxEl.parentNode) {
+            lightboxEl.remove();
+            lightboxEl = null;
+        }
+        document.body.style.overflow = '';
     }
 
-    // Corrigir diretório base se necessário
-    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
-        caminhoImagem = '/' + caminhoImagem;
-    }
-
-    // Prepend baseURL se não for uma URL completa
-    if (!caminhoImagem.startsWith('http')) {
-        caminhoImagem = baseURL + caminhoImagem;
-    }
-
-    galeriaImagem.src = caminhoImagem;
-    galeriaContador.textContent = (fotoAtual + 1) + ' / ' + fotos.length;
-
-    galeriaPrev.style.display = '';
-    galeriaNext.style.display = '';
-}
-    /*
-    function atualizarImagem() {
+    function atualizarImagem(imgEl, contadorEl) {
         if (!fotos.length) return;
-        // Garantir que o caminho está correto
-        let caminhoImagem = fotos[fotoAtual];
-        if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
-            caminhoImagem = '/' + caminhoImagem;
+        let caminho = fotos[fotoAtual];
+        if (!caminho.startsWith('http') && !caminho.startsWith('//')) {
+            caminho = caminho.replace(/^\/+/, '');
         }
-        // Adicionar o diretório do projeto se não estiver presente
-        if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
-            caminhoImagem = '/olx_bant' + caminhoImagem;
-        }
-        galeriaImagem.src = caminhoImagem;
-        galeriaContador.textContent = (fotoAtual+1) + ' / ' + fotos.length;
-        // Sempre mostrar os controles, mesmo com 1 foto
-        galeriaPrev.style.display = '';
-        galeriaNext.style.display = '';
+        imgEl.src = caminho;
+        imgEl.onerror = function() { this.src = 'assets/img/placeholder.jpg'; };
+        if (contadorEl) contadorEl.textContent = (fotoAtual + 1) + ' / ' + fotos.length;
     }
-    */
-    // Eventos de navegação
-    galeriaPrev.addEventListener('click', function() {
-        if (fotos.length) {
+
+    function abrirLightbox() {
+        if (!fotos.length) return;
+        fecharLightbox();
+
+        lightboxEl = document.createElement('div');
+        lightboxEl.id = 'galeriaLightbox';
+        lightboxEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+        const container = document.createElement('div');
+        container.style.cssText = 'position:relative;max-width:95%;max-height:95%;text-align:center;padding:50px 60px;';
+
+        const btnFechar = document.createElement('button');
+        btnFechar.innerHTML = '&times;';
+        btnFechar.style.cssText = 'position:absolute;top:10px;right:10px;background:none;border:none;color:white;font-size:36px;cursor:pointer;z-index:10;line-height:1;padding:5px 15px;';
+        btnFechar.onclick = fecharLightbox;
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.style.cssText = 'position:relative;display:inline-block;';
+
+        const btnPrev = document.createElement('button');
+        btnPrev.innerHTML = '&#10094;';
+        btnPrev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.3);border:none;color:white;font-size:28px;cursor:pointer;z-index:10;width:44px;height:44px;border-radius:50%;' + (fotos.length <= 1 ? 'display:none;' : '');
+        btnPrev.onclick = function(e) {
+            e.stopPropagation();
             fotoAtual = (fotoAtual - 1 + fotos.length) % fotos.length;
-            atualizarImagem();
-        }
-    });
-    galeriaNext.addEventListener('click', function() {
-        if (fotos.length) {
+            atualizarImagem(imgEl, contadorEl);
+        };
+
+        const imgEl = document.createElement('img');
+        imgEl.style.cssText = 'max-height:80vh;max-width:100%;object-fit:contain;display:block;';
+        imgEl.alt = 'Foto do material';
+
+        const btnNext = document.createElement('button');
+        btnNext.innerHTML = '&#10095;';
+        btnNext.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.3);border:none;color:white;font-size:28px;cursor:pointer;z-index:10;width:44px;height:44px;border-radius:50%;' + (fotos.length <= 1 ? 'display:none;' : '');
+        btnNext.onclick = function(e) {
+            e.stopPropagation();
             fotoAtual = (fotoAtual + 1) % fotos.length;
-            atualizarImagem();
-        }
-    });
+            atualizarImagem(imgEl, contadorEl);
+        };
 
-    // Fechar modal reseta galeria
-    galeriaModal.addEventListener('hidden.bs.modal', function() {
-        fotos = [];
-        fotoAtual = 0;
-        galeriaImagem.src = '';
-        galeriaContador.textContent = '';
-    });
-    
-    // Adicionar evento para fechar modal manualmente
-    galeriaModal.addEventListener('click', function(e) {
-        if (e.target === galeriaModal || e.target.classList.contains('btn-close')) {
-            galeriaModal.classList.remove('show');
-            galeriaModal.style.display = 'none';
-            document.body.classList.remove('modal-open');
-            
-            // Remover backdrop se existir
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-                backdrop.remove();
-            }
-        }
-    });
+        const contadorEl = document.createElement('div');
+        contadorEl.style.cssText = 'color:white;margin-top:10px;font-size:14px;';
 
-    // Delegação: clique na imagem do card
+        imgWrapper.appendChild(btnPrev);
+        imgWrapper.appendChild(imgEl);
+        imgWrapper.appendChild(btnNext);
+        container.appendChild(btnFechar);
+        container.appendChild(imgWrapper);
+        container.appendChild(contadorEl);
+        lightboxEl.appendChild(container);
+
+        lightboxEl.onclick = function(e) {
+            if (e.target === lightboxEl) fecharLightbox();
+        };
+
+        document.body.appendChild(lightboxEl);
+        document.body.style.overflow = 'hidden';
+
+        keydownHandler = function(e) {
+            if (e.key === 'Escape') fecharLightbox();
+        };
+        document.addEventListener('keydown', keydownHandler);
+
+        atualizarImagem(imgEl, contadorEl);
+    }
+
     document.addEventListener('click', function(e) {
-        const img = e.target.closest('.material-image[data-fotos]');
-        if (img) {
+        const trigger = e.target.closest('.galeria-trigger[data-fotos]');
+        if (trigger) {
+            e.preventDefault();
             try {
-                fotos = JSON.parse(img.getAttribute('data-fotos'));
+                fotos = JSON.parse(trigger.getAttribute('data-fotos'));
             } catch {
                 fotos = [];
             }
             if (!Array.isArray(fotos) || !fotos.length) return;
-            
-            // Verificar se o modal existe no DOM
-            console.log('Modal no DOM:', document.body.contains(galeriaModal));
-            console.log('Modal position:', galeriaModal.offsetParent);
-            
             fotoAtual = 0;
-            atualizarImagem();
-            
-            try {
-                const modal = new bootstrap.Modal(galeriaModal);
-                modal.show();
-                
-                // Verificar se o modal foi exibido
-                setTimeout(() => {
-                    console.log('=== DEBUG MODAL ===');
-                    console.log('Modal element:', galeriaModal);
-                    console.log('Modal classes:', galeriaModal.className);
-                    console.log('Modal style display:', galeriaModal.style.display);
-                    console.log('Modal computed display:', window.getComputedStyle(galeriaModal).display);
-                    console.log('Modal visible:', galeriaModal.classList.contains('show'));
-                    console.log('Body modal-open:', document.body.classList.contains('modal-open'));
-                    
-                    // Se o modal não foi exibido, criar um modal simples
-                    if (!galeriaModal.classList.contains('show')) {
-                        console.log('Criando modal simples...');
-                        
-                        // Remover modal Bootstrap se existir
-                        const existingModal = document.getElementById('galeriaModal');
-                        if (existingModal) {
-                            existingModal.remove();
-                        }
-                        
-                        // Criar modal simples
-                        const simpleModal = document.createElement('div');
-                        simpleModal.id = 'simpleGaleriaModal';
-                        simpleModal.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            background-color: rgba(0,0,0,0.8);
-                            z-index: 9999;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        `;
-                        
-                        // Conteúdo do modal
-
-                        /*
-                        simpleModal.innerHTML = `
-                            <div style="background: #222; padding: 20px; border-radius: 10px; max-width: 90%; max-height: 90%; position: relative;">
-                                <button id="closeModalBtn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; z-index: 10000;">×</button>
-                                <div style="text-align: center; position: relative;">
-                                    <button id="prevBtn" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; border-radius: 50%; ${fotos.length <= 1 ? 'display: none;' : ''}">‹</button>
-                                    <img id="modalImage" src="${galeriaImagem.src}" style="max-width: 100%; max-height: 70vh; object-fit: contain;" alt="Foto do material">
-                                    <button id="nextBtn" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 10px; border-radius: 50%; ${fotos.length <= 1 ? 'display: none;' : ''}">›</button>
-                                    <div style="color: white; margin-top: 10px;">
-                                        ${(fotoAtual+1)} / ${fotos.length}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        */
-                        //document.body.appendChild(simpleModal);
-                        
-                        // Adicionar eventos aos controles
-                        //const closeBtn = document.getElementById('closeModalBtn');
-                        const prevBtn = document.getElementById('prevBtn');
-                        const nextBtn = document.getElementById('nextBtn');
-                        const modalImg = document.getElementById('modalImage');
-                        
-                        // Fechar modal
-                        /*
-                        closeBtn.addEventListener('click', function() {
-                            simpleModal.remove();
-                        });
-                        */
-                        // Navegação anterior
-                        if (prevBtn) {
-                            prevBtn.addEventListener('click', function() {
-                                if (fotos.length > 1) {
-                                    fotoAtual = (fotoAtual - 1 + fotos.length) % fotos.length;
-                                    let caminhoImagem = fotos[fotoAtual];
-                                    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
-                                        caminhoImagem = '/' + caminhoImagem;
-                                    }
-                                    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
-                                        caminhoImagem = '/olx_bant' + caminhoImagem;
-                                    }
-                                    modalImg.src = caminhoImagem;
-                                    document.querySelector('#simpleGaleriaModal div div div:last-child').textContent = `${(fotoAtual+1)} / ${fotos.length}`;
-                                }
-                            });
-                        }
-                        
-                        // Navegação próxima
-                        if (nextBtn) {
-                            nextBtn.addEventListener('click', function() {
-                                if (fotos.length > 1) {
-                                    fotoAtual = (fotoAtual + 1) % fotos.length;
-                                    let caminhoImagem = fotos[fotoAtual];
-                                    if (!caminhoImagem.startsWith('http') && !caminhoImagem.startsWith('/')) {
-                                        caminhoImagem = '/' + caminhoImagem;
-                                    }
-                                    if (caminhoImagem.startsWith('/uploads/') && !caminhoImagem.includes('/olx_bant/')) {
-                                        caminhoImagem = '/olx_bant' + caminhoImagem;
-                                    }
-                                    modalImg.src = caminhoImagem;
-                                    document.querySelector('#simpleGaleriaModal div div div:last-child').textContent = `${(fotoAtual+1)} / ${fotos.length}`;
-                                }
-                            });
-                        }
-                        
-                        // Fechar modal ao clicar fora da imagem
-                        simpleModal.addEventListener('click', function(e) {
-                            if (e.target === simpleModal) {
-                                simpleModal.remove();
-                            }
-                        });
-                        
-                        console.log('Modal simples criado com controles');
-                    }
-                }, 100);
-            } catch (error) {
-                console.error('Erro ao abrir modal:', error);
-                // Fallback: forçar exibição manual
-                galeriaModal.classList.add('show');
-                galeriaModal.style.display = 'block';
-                galeriaModal.style.zIndex = '1055';
-                galeriaModal.style.position = 'fixed';
-                galeriaModal.style.top = '0';
-                galeriaModal.style.left = '0';
-                galeriaModal.style.width = '100%';
-                galeriaModal.style.height = '100%';
-                galeriaModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                document.body.classList.add('modal-open');
-                
-                // Centralizar o conteúdo do modal
-                const modalDialog = galeriaModal.querySelector('.modal-dialog');
-                if (modalDialog) {
-                    modalDialog.style.position = 'relative';
-                    modalDialog.style.margin = '1.75rem auto';
-                    modalDialog.style.maxWidth = '90%';
-                    modalDialog.style.maxHeight = '90%';
-                }
-            }
-            
-            // Abordagem alternativa: alert temporário para confirmar que o código está sendo executado
-            setTimeout(() => {
-                if (!galeriaModal.classList.contains('show')) {
-                    console.log('Modal não apareceu, mas modal simples foi criado');
-                }
-            }, 500);
+            abrirLightbox();
         }
     });
 })();
