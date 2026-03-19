@@ -52,9 +52,28 @@ switch ($route) {
         $controller = new MaterialController();
         $controller->getResgatesAjax();
         break;
+    case 'admin/materiais/toggleAtivarAjax':
+        $controller = new MaterialController();
+        $controller->toggleAtivarAjax();
+        break;
     case 'admin/materiais/marcarRetiradoAjax':
         $controller = new MaterialController();
         $controller->marcarRetiradoAjax();
+        break;
+    case 'admin/relatorios':
+        require_once 'controllers/ReportController.php';
+        $controller = new ReportController();
+        $controller->index();
+        break;
+    case 'admin/relatorios/data':
+        require_once 'controllers/ReportController.php';
+        $controller = new ReportController();
+        $controller->dataAjax();
+        break;
+    case 'admin/relatorios/exportPdf':
+        require_once 'controllers/ReportController.php';
+        $controller = new ReportController();
+        $controller->exportPdf();
         break;
     case 'admin/resgates':
         $controller = new ResgateController();

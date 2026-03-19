@@ -117,6 +117,14 @@
                             <span>Tutorial</span>
                         </a>
                     </div>
+                    <?php if (isset($_SESSION['admin_nivel']) && $_SESSION['admin_nivel'] === 'admin'): ?>
+                    <div class="col-md-6">
+                        <a href="index.php?route=admin/relatorios" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                            <i class="bi bi-file-earmark-text fs-1 mb-2"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </div>
+                    <?php endif; ?>
                     <div class="col-md-6">
                         <a href="index.php" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
                             <i class="bi bi-eye fs-1 mb-2"></i>

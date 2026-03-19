@@ -46,153 +46,237 @@
             </div>
         </div>
         <?php else: ?>
-        <div class="row g-4">
-            <?php foreach ($materiais as $material): ?>
-            <?php 
-                $fotos = json_decode($material['fotos'], true) ?: [];
-                $foto_principal = !empty($fotos) ? $fotos[0] : null;
-                $fotos_json = htmlspecialchars(json_encode(array_map(function($f) { return UPLOAD_PATH . ltrim($f, '/'); }, $fotos)));
-            ?>
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="card material-card h-100">
-                    <div class="position-relative galeria-trigger" data-fotos='<?= $fotos_json ?>' style="cursor:<?= !empty($fotos) ? 'zoom-in' : 'default' ?>;">
-                        <?php if ($foto_principal): ?>
-                            <img src="<?= UPLOAD_PATH . $foto_principal ?>" 
-                                 class="card-img-top material-image" 
-                                 alt="Foto do material"
-                                 onerror="this.src='assets/img/placeholder.jpg'">
-                        <?php else: ?>
-                            <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
-                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($material['status'] == 'resgatado'): ?>
-                            <span class="badge bg-warning status-badge">
-                                <i class="bi bi-hourglass-split"></i> Iniciado o processo
-                            </span>
-                            <?php elseif ($material['status'] == 'em_disputa'): ?>
-                                <?php 
-                                // Verificar se a disputa expirou
-                                $disputa_expirada = false;
-                                if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
-                                    $disputa_expirada = true;
-                                }
-                                ?>
-                                <?php if ($disputa_expirada): ?>
-                                    <span class="badge bg-danger status-badge">
-                                        <i class="bi bi-clock-history"></i> Disputa Finalizada
-                                    </span>
-                                <?php else: ?>
-                                    <span class="badge bg-warning status-badge">
-                                        <i class="bi bi-exclamation-triangle"></i> Em Seleção
-                                    </span>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <span class="badge bg-success status-badge">
-                                    <i class="bi bi-check-circle"></i> Disponível
-                                </span>
-                            <?php endif; ?>
-                    </div>
-                    
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title"><?= htmlspecialchars($material['descricao']) ?></h5>
-                        
-                        <div class="mb-3">
-                            <small class="text-muted">
-                                <i class="bi bi-geo-alt"></i> <strong>Local:</strong> <?= htmlspecialchars($material['local_retirada']) ?>
-                            </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-hash"></i> <strong>BMP:</strong> <?= htmlspecialchars($material['numero_bmp']) ?>
-                            </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-person"></i> <strong>Dono:</strong> <?= htmlspecialchars($material['dono_carga']) ?>
-                            </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-star"></i> <strong>Condição:</strong> 
-                                <?= ucfirst($material['condicao_item']) ?>
-                            </small><br>
-                            <small class="text-muted">
-                                <i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?>
-                            </small><br>
-                            <?php if ($material['status'] == 'resgatado'): ?>
-                                <small class="text-muted">
-                                <i class="bi bi-box"></i> <strong>Material zerado! Entrar em seleção</strong>
-                                </small>
-                            <?php endif; ?>
-                            <?php if ($material['status'] == 'disponivel' || $material['status'] == 'aguardando_retirada'): ?>
-                                <small class="text-muted">
-                                    <i class="bi bi-box"></i> <strong>Disponível:</strong> <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?>
-                                </small>
-                            <?php endif; ?>
-                            <?php if ($material['status'] == 'em_disputa'): ?>
-                                <?php 
-                                $disputa_expirada = false;
-                                if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
-                                    $disputa_expirada = true;
-                                }
-                                ?>
-                                <?php if ($disputa_expirada): ?>
-                                    <small class="text-danger">
-                                        <i class="bi bi-clock-history"></i> <strong>Disputa finalizada - Aguardando decisão do administrador</strong>
-                                    </small>
-                                <?php else: ?>
-                                    <small class="text-warning">
-                                        <i class="bi bi-exclamation-triangle"></i> <strong>Em Seleção - Prazo: 
-                                            <?= $material['data_limite_disputa'] ? date('d/m/Y H:i', strtotime($material['data_limite_disputa'])) : '-' ?>
-                                        </strong>
-                                    </small>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <?php if (count($fotos) > 1): ?>
-                        <div class="mb-3">
-                            <small class="text-muted">
-                                <i class="bi bi-images"></i> <?= count($fotos) ?> fotos disponíveis
-                            </small>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <div class="mt-auto">
-                            <?php 
-                            $disputa_expirada = false;
-                            if ($material['status'] == 'em_disputa' && $material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
-                                $disputa_expirada = true;
-                            }
-                            ?>
-                            
-                            <?php if ($material['status'] == 'em_disputa' && $disputa_expirada): ?>
-                                <!-- Disputa expirada - não permite novos resgates -->
-                                <button type="button" class="btn btn-secondary w-100" disabled>
-                                    <i class="bi bi-clock-history"></i> DISPUTA FINALIZADA
-                                </button>
-                                <p class="text-center text-muted" style="font-size: 0.8rem;">Aguardando decisão do administrador</p>
-                            <?php else: ?>
-                                <button type="button" 
-                                        class="btn btn-primary w-100" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#resgateModal"
-                                        data-material-id="<?= $material['id'] ?>"
-                                        data-material-desc="<?= htmlspecialchars($material['descricao']) ?>"
-                                        data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>"
-                                        >
-                                        <?php if ($material['status'] == 'em_disputa'): ?>
-                                            <i class="bi bi-exclamation-triangle"></i> ENTRAR NA SELEÇÃO
-                                        <?php else: ?>
-                                            <i class="bi bi-hand-index"></i> RESGATAR
-                                        <?php endif; ?>
-                                </button>
-                                <?php if ($material['status'] == 'em_disputa'): ?>
-                                    <p class="text-center text-muted" style="font-size: 0.8rem;">Clique para participar da seleção!</p>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
+        <?php
+            // Separar materiais por seção para melhor experiência do usuário
+            $disponiveis = [];
+            $em_disputa = [];
+            $finalizados = [];
+
+            foreach ($materiais as $m) {
+                $disputa_expirada = false;
+                if ($m['status'] == 'em_disputa' && $m['data_limite_disputa'] && $m['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                    $disputa_expirada = true;
+                }
+
+                if ($m['status'] == 'disputa_encerrada' || ($m['status'] == 'em_disputa' && $disputa_expirada)) {
+                    $finalizados[] = $m;
+                } elseif ($m['status'] == 'em_disputa') {
+                    $em_disputa[] = $m;
+                } else {
+                    $disponiveis[] = $m;
+                }
+            }
+        ?>
+
+        <!-- Seção: Materiais Disponíveis -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <h3>Materiais Disponíveis</h3>
+                <p class="text-muted">Anúncios que podem ser resgatados imediatamente.</p>
+            </div>
+        </div>
+        <?php if (empty($disponiveis)): ?>
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Nenhum material disponível no momento.
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($disponiveis as $material): ?>
+                    <?php 
+                        $fotos = json_decode($material['fotos'], true) ?: [];
+                        $foto_principal = !empty($fotos) ? $fotos[0] : null;
+                        $fotos_json = htmlspecialchars(json_encode(array_map(function($f) { return UPLOAD_PATH . ltrim($f, '/'); }, $fotos)));
+                    ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card material-card h-100">
+                            <div class="position-relative galeria-trigger" data-fotos='<?= $fotos_json ?>' style="cursor:<?= !empty($fotos) ? 'zoom-in' : 'default' ?>;">
+                                <?php if ($foto_principal): ?>
+                                    <img src="<?= UPLOAD_PATH . $foto_principal ?>" class="card-img-top material-image" alt="Foto do material" onerror="this.src='assets/img/placeholder.jpg'">
+                                <?php else: ?>
+                                    <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($material['status'] == 'resgatado'): ?>
+                                    <span class="badge bg-warning status-badge">
+                                        <i class="bi bi-hourglass-split"></i> Iniciado o processo
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-success status-badge">
+                                        <i class="bi bi-check-circle"></i> Disponível
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title"><?= htmlspecialchars($material['descricao']) ?></h5>
+                                <div class="mb-3">
+                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <strong>Local:</strong> <?= htmlspecialchars($material['local_retirada']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-hash"></i> <strong>BMP:</strong> <?= htmlspecialchars($material['numero_bmp']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-person"></i> <strong>Dono:</strong> <?= htmlspecialchars($material['dono_carga']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-star"></i> <strong>Condição:</strong> <?= ucfirst($material['condicao_item']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-box"></i> <strong>Disponível:</strong> <?= $material['quantidade_disponivel'] ?> de <?= $material['quantidade_total'] ?></small>
+                                </div>
+                                <?php if (count($fotos) > 1): ?>
+                                    <div class="mb-3">
+                                        <small class="text-muted"><i class="bi bi-images"></i> <?= count($fotos) ?> fotos disponíveis</small>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="mt-auto">
+                                    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#resgateModal" data-material-id="<?= $material['id'] ?>" data-material-desc="<?= htmlspecialchars($material['descricao']) ?>" data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>">
+                                        <i class="bi bi-hand-index"></i> RESGATAR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Seção: Materiais em Seleção (Disputa) -->
+        <div class="row mt-5 mb-3">
+            <div class="col-12">
+                <h3>Materiais em Seleção</h3>
+                <p class="text-muted">Materiais que estão em disputa — você pode participar da seleção.</p>
+            </div>
         </div>
+        <?php if (empty($em_disputa)): ?>
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Nenhum material em seleção no momento.
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($em_disputa as $material): ?>
+                    <?php 
+                        $fotos = json_decode($material['fotos'], true) ?: [];
+                        $foto_principal = !empty($fotos) ? $fotos[0] : null;
+                        $fotos_json = htmlspecialchars(json_encode(array_map(function($f) { return UPLOAD_PATH . ltrim($f, '/'); }, $fotos)));
+                        $disputa_expirada = false;
+                        if ($material['data_limite_disputa'] && $material['data_limite_disputa'] < date('Y-m-d H:i:s')) {
+                            $disputa_expirada = true;
+                        }
+                    ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card material-card h-100">
+                            <div class="position-relative galeria-trigger" data-fotos='<?= $fotos_json ?>' style="cursor:<?= !empty($fotos) ? 'zoom-in' : 'default' ?>;">
+                                <?php if ($foto_principal): ?>
+                                    <img src="<?= UPLOAD_PATH . $foto_principal ?>" class="card-img-top material-image" alt="Foto do material" onerror="this.src='assets/img/placeholder.jpg'">
+                                <?php else: ?>
+                                    <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($disputa_expirada): ?>
+                                    <span class="badge bg-danger status-badge"><i class="bi bi-clock-history"></i> Disputa Finalizada</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning status-badge"><i class="bi bi-exclamation-triangle"></i> Em Seleção</span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title"><?= htmlspecialchars($material['descricao']) ?></h5>
+                                <div class="mb-3">
+                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <strong>Local:</strong> <?= htmlspecialchars($material['local_retirada']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-hash"></i> <strong>BMP:</strong> <?= htmlspecialchars($material['numero_bmp']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-person"></i> <strong>Dono:</strong> <?= htmlspecialchars($material['dono_carga']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-star"></i> <strong>Condição:</strong> <?= ucfirst($material['condicao_item']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?></small><br>
+                                    <?php if ($disputa_expirada): ?>
+                                        <small class="text-danger"><i class="bi bi-clock-history"></i> <strong>Disputa finalizada</strong></small>
+                                    <?php else: ?>
+                                        <small class="text-warning"><i class="bi bi-exclamation-triangle"></i> <strong>Em Seleção - Prazo: <?= $material['data_limite_disputa'] ? date('d/m/Y H:i', strtotime($material['data_limite_disputa'])) : '-' ?></strong></small>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if (count($fotos) > 1): ?>
+                                    <div class="mb-3">
+                                        <small class="text-muted"><i class="bi bi-images"></i> <?= count($fotos) ?> fotos disponíveis</small>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="mt-auto">
+                                    <?php if ($disputa_expirada): ?>
+                                        <button type="button" class="btn btn-secondary w-100" disabled><i class="bi bi-clock-history"></i> DISPUTA FINALIZADA</button>
+                                        <p class="text-center text-muted" style="font-size: 0.8rem;">Material INDISPONÍVEL</p>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#resgateModal" data-material-id="<?= $material['id'] ?>" data-material-desc="<?= htmlspecialchars($material['descricao']) ?>" data-quantidade-disponivel="<?= $material['quantidade_disponivel'] ?>">
+                                            <i class="bi bi-exclamation-triangle"></i> ENTRAR NA SELEÇÃO
+                                        </button>
+                                        <p class="text-center text-muted" style="font-size: 0.8rem;">Clique para participar da seleção!</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Seção: Materiais Finalizados -->
+        <div class="row mt-5 mb-3">
+            <div class="col-12">
+                <h3>Materiais Finalizados</h3>
+                <p class="text-muted">Materiais cuja disputa foi finalizada e não estão mais disponíveis.</p>
+            </div>
+        </div>
+        <?php if (empty($finalizados)): ?>
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Nenhum material finalizado no momento.
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="row g-4">
+                <?php foreach ($finalizados as $material): ?>
+                    <?php 
+                        $fotos = json_decode($material['fotos'], true) ?: [];
+                        $foto_principal = !empty($fotos) ? $fotos[0] : null;
+                        $fotos_json = htmlspecialchars(json_encode(array_map(function($f) { return UPLOAD_PATH . ltrim($f, '/'); }, $fotos)));
+                    ?>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card material-card h-100">
+                            <div class="position-relative galeria-trigger" data-fotos='<?= $fotos_json ?>' style="cursor:<?= !empty($fotos) ? 'zoom-in' : 'default' ?>;">
+                                <?php if ($foto_principal): ?>
+                                    <img src="<?= UPLOAD_PATH . $foto_principal ?>" class="card-img-top material-image" alt="Foto do material" onerror="this.src='assets/img/placeholder.jpg'">
+                                <?php else: ?>
+                                    <div class="card-img-top material-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <span class="badge bg-danger status-badge"><i class="bi bi-clock-history"></i> Disputa Finalizada</span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title"><?= htmlspecialchars($material['descricao']) ?></h5>
+                                <div class="mb-3">
+                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <strong>Local:</strong> <?= htmlspecialchars($material['local_retirada']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-hash"></i> <strong>BMP:</strong> <?= htmlspecialchars($material['numero_bmp']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-person"></i> <strong>Dono:</strong> <?= htmlspecialchars($material['dono_carga']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-star"></i> <strong>Condição:</strong> <?= ucfirst($material['condicao_item']) ?></small><br>
+                                    <small class="text-muted"><i class="bi bi-tag"></i> <strong>Tipo:</strong> <?= htmlspecialchars($material['tipo_material']) ?></small><br>
+                                </div>
+                                <?php if (count($fotos) > 1): ?>
+                                    <div class="mb-3">
+                                        <small class="text-muted"><i class="bi bi-images"></i> <?= count($fotos) ?> fotos disponíveis</small>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="mt-auto">
+                                    <button type="button" class="btn btn-secondary w-100" disabled><i class="bi bi-clock-history"></i> DISPUTA FINALIZADA</button>
+                                    <p class="text-center text-muted" style="font-size: 0.8rem;">Material INDISPONÍVEL</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         <?php endif; ?>
     </div>
 </section>

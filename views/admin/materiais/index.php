@@ -146,6 +146,14 @@
                                         <i class="bi bi-list-ul"></i>
                                     </button>
                                 <?php endif; ?>
+                                <!-- Botão para ativar/desativar material (visibilidade na página inicial) -->
+                                <?php $ativo = isset($material['ativo']) ? (int)$material['ativo'] : 1; ?>
+                                <button type="button"
+                                        class="btn btn-sm <?= $ativo ? 'btn-outline-secondary' : 'btn-outline-success' ?>"
+                                        title="<?= $ativo ? 'Desabilitar material' : 'Ativar material' ?>"
+                                        onclick="toggleAtivar(<?= $material['id'] ?>, this)">
+                                    <i class="bi <?= $ativo ? 'bi-eye-slash' : 'bi-eye' ?>"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -343,6 +351,48 @@ function marcarRetirado(resgateId, materialId) {
     })
     .catch(() => {
         alert('Erro ao processar a solicitação.');
+    });
+}
+
+// Toggle ativo/desativado via AJAX (global)
+function toggleAtivar(materialId, btn) {
+    if (!confirm('Confirma alternar a visibilidade deste material na página inicial?')) return;
+
+    btn.disabled = true;
+    const originalHtml = btn.innerHTML;
+
+    fetch('index.php?route=admin/materiais/toggleAtivarAjax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: materialId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const ativo = data.ativo == 1;
+            // Atualizar botão visualmente
+            btn.classList.remove('btn-outline-secondary', 'btn-outline-success');
+            btn.classList.add(ativo ? 'btn-outline-secondary' : 'btn-outline-success');
+            btn.title = ativo ? 'Desabilitar material' : 'Ativar material';
+            btn.innerHTML = '<i class="bi ' + (ativo ? 'bi-eye-slash' : 'bi-eye') + '"></i>';
+            // Opcional: marcar a linha com classe (ex.: desativado)
+            const tr = btn.closest('tr');
+            if (tr) {
+                if (!ativo) {
+                    tr.classList.add('table-secondary');
+                } else {
+                    tr.classList.remove('table-secondary');
+                }
+            }
+        } else {
+            alert('Erro: ' + (data.message || 'Não foi possível alternar'));
+        }
+    })
+    .catch(() => {
+        alert('Erro ao processar a solicitação.');
+    })
+    .finally(() => {
+        btn.disabled = false;
     });
 }
 </script> 

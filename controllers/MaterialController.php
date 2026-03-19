@@ -322,4 +322,32 @@ class MaterialController {
         echo json_encode(['success' => true]);
         exit;
     }
+
+    // AJAX: Alternar ativo/desativado de um material (visibilidade na página pública)
+    public function toggleAtivarAjax() {
+        header('Content-Type: application/json');
+        if (!isset($_SESSION['admin_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Não autorizado']);
+            exit;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $material_id = isset($input['id']) ? (int)$input['id'] : 0;
+        if ($material_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID inválido']);
+            exit;
+        }
+
+        $material = $this->db->fetch("SELECT id, ativo FROM materiais WHERE id = ?", [$material_id]);
+        if (!$material) {
+            echo json_encode(['success' => false, 'message' => 'Material não encontrado']);
+            exit;
+        }
+
+        $novo_valor = $material['ativo'] ? 0 : 1;
+        $this->db->query("UPDATE materiais SET ativo = ? WHERE id = ?", [$novo_valor, $material_id]);
+
+        echo json_encode(['success' => true, 'ativo' => (int)$novo_valor]);
+        exit;
+    }
 } 

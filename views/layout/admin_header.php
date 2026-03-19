@@ -116,6 +116,14 @@ if (!isset($route)) {
                       </li>
                       <?php if (isset($_SESSION['admin_nivel']) && $_SESSION['admin_nivel'] === 'admin'): ?>
                       <li>
+                          <a href="index.php?route=admin/relatorios" class="nav-link <?= strpos($route, 'relatorios') !== false ? 'active' : '' ?>">
+                              <i class="bi bi-file-earmark-text me-2"></i>
+                              Relatórios
+                          </a>
+                      </li>
+                      <?php endif; ?>
+                      <?php if (isset($_SESSION['admin_nivel']) && $_SESSION['admin_nivel'] === 'admin'): ?>
+                      <li>
                           <a href="index.php?route=admin/usuarios" class="nav-link <?= strpos($route, 'usuarios') !== false ? 'active' : '' ?>">
                               <i class="bi bi-person-gear me-2"></i>
                               Usuários
